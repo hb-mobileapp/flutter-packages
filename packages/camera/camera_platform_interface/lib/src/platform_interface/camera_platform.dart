@@ -170,6 +170,18 @@ abstract class CameraPlatform extends PlatformInterface {
     throw UnimplementedError('setFlashMode() is not implemented.');
   }
 
+  /// Completes with a list of available lens apertures.
+  ///
+  /// This method returns an empty list when no lens apertures are available.
+  Future<List<double>> availableLensApertures() {
+    throw UnimplementedError('availableLensApertures() is not implemented.');
+  }
+
+  /// Sets the lens aperture for exposure control.
+  Future<double> setLensAperture(int cameraId, double aperture){
+    throw UnimplementedError('setLensAperture() is not implemented.');
+  }
+
   /// Sets the exposure mode for taking pictures.
   Future<void> setExposureMode(int cameraId, ExposureMode mode) {
     throw UnimplementedError('setExposureMode() is not implemented.');
@@ -215,6 +227,31 @@ abstract class CameraPlatform extends PlatformInterface {
     throw UnimplementedError('setExposureOffset() is not implemented.');
   }
 
+  /// Gets the maximum exposure time for the selected camera.
+  Future<int> getMaxExposureTime(int cameraId) {
+    throw UnimplementedError('getMaxExposureTime() is not implemented.');
+  }
+
+  /// Gets the minimum exposure time for the selected camera.
+  Future<int> getMinExposureTime(int cameraId) {
+    throw UnimplementedError('getMinExposureTime() is not implemented.');
+  }
+
+  /// Sets the exposure time for the selected camera.
+  ///
+  /// The supplied [time] value should be in nanoseconds.
+  /// It should be between the minimum and maximum exposure time
+  /// obtained through `getMinExposureTime` and `getMaxExposureTime` respectively.
+  /// Throws a `CameraException` when an illegal offset is supplied.
+  ///
+  /// When the supplied [offset] value does not align with the step size obtained
+  /// through `getExposureStepSize`, it will automatically be rounded to the nearest step.
+  ///
+  /// Returns the (rounded) offset value that was set.
+  Future<int> setExposureTime(int cameraId, int time) {
+    throw UnimplementedError('setExposureTime() is not implemented.');
+  }
+
   /// Sets the focus mode for taking pictures.
   Future<void> setFocusMode(int cameraId, FocusMode mode) {
     throw UnimplementedError('setFocusMode() is not implemented.');
@@ -226,6 +263,21 @@ abstract class CameraPlatform extends PlatformInterface {
   /// original focus point value.
   Future<void> setFocusPoint(int cameraId, Point<double>? point) {
     throw UnimplementedError('setFocusPoint() is not implemented.');
+  }
+
+  /// Gets the minimum supported sensor sensitivity for the selected camera.
+  Future<int> getMaxSensorSensitivity(int cameraId) {
+    throw UnimplementedError('getMinExposureOffset() is not implemented.');
+  }
+
+  /// Gets the minimum supported sensor sensitivity for the selected camera.
+  Future<int> getMinSensorSensitivity(int cameraId) {
+    throw UnimplementedError('getMinExposureOffset() is not implemented.');
+  }
+
+
+  Future<int> setSensorSensitivity(int cameraId, int sensorSensitivity){
+    throw UnimplementedError('setSensorSensitivity() is not implemented.');
   }
 
   /// Gets the maximum supported zoom level for the selected camera.
