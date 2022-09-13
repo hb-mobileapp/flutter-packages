@@ -173,9 +173,17 @@ abstract class CameraPlatform extends PlatformInterface {
   /// Completes with a list of available lens apertures.
   ///
   /// This method returns an empty list when no lens apertures are available.
-  Future<List<double>> availableLensApertures() {
+  Future<List<double>> availableLensApertures(int cameraId) {
     throw UnimplementedError('availableLensApertures() is not implemented.');
   }
+
+  /// Gets lens aperture for the target camera.
+  ///
+  /// This method returns an empty list when no lens apertures are available.
+  Future<double> getLensAperture(int cameraId) {
+    throw UnimplementedError('getLensAperture() is not implemented.');
+  }
+
 
   /// Sets the lens aperture for exposure control.
   Future<double> setLensAperture(int cameraId, double aperture){
@@ -276,6 +284,7 @@ abstract class CameraPlatform extends PlatformInterface {
   }
 
 
+  /// Sets sensor sensitivity for the selected camera.
   Future<int> setSensorSensitivity(int cameraId, int sensorSensitivity){
     throw UnimplementedError('setSensorSensitivity() is not implemented.');
   }

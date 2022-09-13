@@ -386,6 +386,7 @@ class CameraController extends ValueNotifier<CameraValue> {
     return CameraPlatform.instance.setExposureOffset(_cameraId, offset);
   }
 
+
   /// Locks the capture orientation.
   ///
   /// If [orientation] is omitted, the current device orientation is used.

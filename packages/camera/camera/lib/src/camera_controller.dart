@@ -583,6 +583,47 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
   }
 
+
+  /// Gets the maximum sensor sensitivity  for the selected camera.
+  Future<int> getMaxSensorSensitivity() {
+    _throwIfNotInitialized('getMaxSensorSensitivity');
+    try {
+      return CameraPlatform.instance.getMaxSensorSensitivity(_cameraId);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+  /// Gets the minimum sensor sensitivity for the selected camera.
+  Future<int> getMinSensorSensitivity() {
+    _throwIfNotInitialized('getMinSensorSensitivity');
+    try {
+      return CameraPlatform.instance.getMinSensorSensitivity(_cameraId);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+  // Sets the sensor sensitivity for the selected camera
+  Future<int> setSensorSensitivity(int sensorSensitivity) async {
+
+    final List<int> range = await Future.wait(
+        <Future<int>>[getMinSensorSensitivity(), getMaxSensorSensitivity()]);
+
+    if (sensorSensitivity < range[0] || sensorSensitivity > range[1]) {
+      throw CameraException(
+        'sensorSensitivityOutOfBounds',
+        'The provided sensor sensitivity was outside the supported range for this device.',
+      );
+    }
+
+    try {
+      return CameraPlatform.instance.setSensorSensitivity(_cameraId, sensorSensitivity);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
   /// Gets the maximum supported zoom level for the selected camera.
   Future<double> getMaxZoomLevel() {
     _throwIfNotInitialized('getMaxZoomLevel');
@@ -733,6 +774,72 @@ class CameraController extends ValueNotifier<CameraValue> {
 
     try {
       return CameraPlatform.instance.setExposureOffset(_cameraId, offset);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+
+  /// Gets the minimum supported exposure time for the selected camera.
+  Future<int> getMinExposureTime() {
+    _throwIfNotInitialized('getMinExposureTime');
+    try {
+      return CameraPlatform.instance.getMinExposureTime(_cameraId);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+  /// Gets the maximum supported exposure time for the selected camera.
+  Future<int> getMaxExposureTime() {
+    _throwIfNotInitialized('getMaxExposureTime');
+    try {
+      return CameraPlatform.instance.getMaxExposureTime(_cameraId);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+  /// Sets exposure time for the selected camera.
+  Future<int> setExposureTime(int nanoseconds) {
+    _throwIfNotInitialized('setExposureTime');
+    try {
+      return CameraPlatform.instance.setExposureTime(_cameraId, nanoseconds);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+
+  /// Gets the supported lens aperture for the selected camera.
+  Future<List<double>> getAvailableLensApertures() {
+    _throwIfNotInitialized('getAvailableLensApertures');
+    try {
+      return CameraPlatform.instance.availableLensApertures(_cameraId);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+  /// Gets the lens aperture for the selected camera.
+  Future<double> getLensAperture() {
+    _throwIfNotInitialized('getLensAperture');
+    try {
+      return CameraPlatform.instance.getLensAperture(_cameraId);
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
+  }
+
+  /// Sets lens aperture for the selected camera.
+  Future<double> setLensAperture(double? aperture) async {
+    if (aperture != null && (aperture < 0)) {
+      throw ArgumentError(
+          'The values of aperture should be more than 0.');
+    }
+
+    try {
+      return CameraPlatform.instance.setLensAperture(_cameraId, aperture!);
     } on PlatformException catch (e) {
       throw CameraException(e.code, e.message);
     }

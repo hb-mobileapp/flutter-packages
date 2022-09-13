@@ -52,9 +52,24 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   VideoPlayerController? videoController;
   VoidCallback? videoPlayerListener;
   bool enableAudio = true;
+
   double _minAvailableExposureOffset = 0.0;
   double _maxAvailableExposureOffset = 0.0;
   double _currentExposureOffset = 0.0;
+
+  int _minExposureTime = 0;
+  int _maxExposureTime = 0;
+  int _currentExposureTime = 0;
+
+  List<double> _availableLensApertures = List.empty();
+  double _currentLensAperture = 0.0;
+
+  int _minSensorSensitivity = 0;
+  int _maxSensorSensitivity = 0;
+  int _currentSensorSensitivity = 0;
+
+
+
   late AnimationController _flashModeControlRowAnimationController;
   late Animation<double> _flashModeControlRowAnimation;
   late AnimationController _exposureModeControlRowAnimationController;
@@ -140,9 +155,9 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                 color: Colors.black,
                 border: Border.all(
                   color:
-                      controller != null && controller!.value.isRecordingVideo
-                          ? Colors.redAccent
-                          : Colors.grey,
+                  controller != null && controller!.value.isRecordingVideo
+                      ? Colors.redAccent
+                      : Colors.grey,
                   width: 3.0,
                 ),
               ),
@@ -159,6 +174,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           Padding(
             padding: const EdgeInsets.all(5.0),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 _cameraTogglesRowWidget(),
                 _thumbnailWidget(),
@@ -191,14 +207,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           controller!,
           child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onScaleStart: _handleScaleStart,
-              onScaleUpdate: _handleScaleUpdate,
-              onTapDown: (TapDownDetails details) =>
-                  onViewFinderTap(details, constraints),
-            );
-          }),
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onScaleStart: _handleScaleStart,
+                  onScaleUpdate: _handleScaleUpdate,
+                  onTapDown: (TapDownDetails details) =>
+                      onViewFinderTap(details, constraints),
+                );
+              }),
         ),
       );
     }
@@ -238,25 +254,25 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                 height: 64.0,
                 child: (localVideoController == null)
                     ? (
-                        // The captured image on the web contains a network-accessible URL
-                        // pointing to a location within the browser. It may be displayed
-                        // either with Image.network or Image.memory after loading the image
-                        // bytes to memory.
-                        kIsWeb
-                            ? Image.network(imageFile!.path)
-                            : Image.file(File(imageFile!.path)))
+                    // The captured image on the web contains a network-accessible URL
+                    // pointing to a location within the browser. It may be displayed
+                    // either with Image.network or Image.memory after loading the image
+                    // bytes to memory.
+                    kIsWeb
+                        ? Image.network(imageFile!.path)
+                        : Image.file(File(imageFile!.path)))
                     : Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.pink)),
-                        child: Center(
-                          child: AspectRatio(
-                              aspectRatio:
-                                  localVideoController.value.size != null
-                                      ? localVideoController.value.aspectRatio
-                                      : 1.0,
-                              child: VideoPlayer(localVideoController)),
-                        ),
-                      ),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Colors.pink)),
+                  child: Center(
+                    child: AspectRatio(
+                        aspectRatio:
+                        localVideoController.value.size != null
+                            ? localVideoController.value.aspectRatio
+                            : 1.0,
+                        child: VideoPlayer(localVideoController)),
+                  ),
+                ),
               ),
           ],
         ),
@@ -270,6 +286,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
       children: <Widget>[
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.max,
           children: <Widget>[
             IconButton(
               icon: const Icon(Icons.flash_on),
@@ -279,20 +296,20 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
             // The exposure and focus mode are currently not supported on the web.
             ...!kIsWeb
                 ? <Widget>[
-                    IconButton(
-                      icon: const Icon(Icons.exposure),
-                      color: Colors.blue,
-                      onPressed: controller != null
-                          ? onExposureModeButtonPressed
-                          : null,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.filter_center_focus),
-                      color: Colors.blue,
-                      onPressed:
-                          controller != null ? onFocusModeButtonPressed : null,
-                    )
-                  ]
+              IconButton(
+                icon: const Icon(Icons.exposure),
+                color: Colors.blue,
+                onPressed: controller != null
+                    ? onExposureModeButtonPressed
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.filter_center_focus),
+                color: Colors.blue,
+                onPressed:
+                controller != null ? onFocusModeButtonPressed : null,
+              )
+            ]
                 : <Widget>[],
             IconButton(
               icon: Icon(enableAudio ? Icons.volume_up : Icons.volume_mute),
@@ -323,6 +340,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
       child: ClipRect(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.max,
           children: <Widget>[
             IconButton(
               icon: const Icon(Icons.flash_off),
@@ -394,12 +412,13 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   TextButton(
                     style: styleAuto,
                     onPressed: controller != null
                         ? () =>
-                            onSetExposureModeButtonPressed(ExposureMode.auto)
+                        onSetExposureModeButtonPressed(ExposureMode.auto)
                         : null,
                     onLongPress: () {
                       if (controller != null) {
@@ -413,7 +432,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                     style: styleLocked,
                     onPressed: controller != null
                         ? () =>
-                            onSetExposureModeButtonPressed(ExposureMode.locked)
+                        onSetExposureModeButtonPressed(ExposureMode.locked)
                         : null,
                     child: const Text('LOCKED'),
                   ),
@@ -431,6 +450,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   Text(_minAvailableExposureOffset.toString()),
                   Slider(
@@ -439,13 +459,66 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                     max: _maxAvailableExposureOffset,
                     label: _currentExposureOffset.toString(),
                     onChanged: _minAvailableExposureOffset ==
-                            _maxAvailableExposureOffset
+                        _maxAvailableExposureOffset
                         ? null
                         : setExposureOffset,
                   ),
                   Text(_maxAvailableExposureOffset.toString()),
                 ],
               ),
+
+              const Center(
+                child: Text('Exposure Time'),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  Text(_minExposureTime.toString()),
+                  Slider(
+                    value: _currentExposureTime.toDouble(),
+                    min: _minExposureTime.toDouble(),
+                    max: _maxExposureTime.toDouble(),
+                    label: _currentExposureTime.toString(),
+                    onChanged: _minExposureTime ==
+                        _maxExposureTime
+                        ? null
+                        : setExposureTime,
+                  ),
+                  Text(_maxExposureTime.toString()),
+                ],
+              ),
+              const Center(
+                child: Text('Lens Aperture'),
+              ),
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    _lensApertureTogglesRowWidget(),
+                  ]
+              ),
+
+              const Center(
+                child: Text('Sensor Sensitivity'),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  Text(_minSensorSensitivity.toString()),
+                  Slider(
+                    value: _currentSensorSensitivity.toDouble(),
+                    min: _minSensorSensitivity.toDouble(),
+                    max: _maxSensorSensitivity.toDouble(),
+                    label: _currentExposureOffset.toString(),
+                    onChanged: _minSensorSensitivity ==
+                        _maxSensorSensitivity
+                        ? null
+                        : setSensorSensitivity,
+                  ),
+                  Text(_maxSensorSensitivity.toString()),
+                ],
+              )
             ],
           ),
         ),
@@ -481,6 +554,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   TextButton(
                     style: styleAuto,
@@ -517,13 +591,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.max,
       children: <Widget>[
         IconButton(
           icon: const Icon(Icons.camera_alt),
           color: Colors.blue,
           onPressed: cameraController != null &&
-                  cameraController.value.isInitialized &&
-                  !cameraController.value.isRecordingVideo
+              cameraController.value.isInitialized &&
+              !cameraController.value.isRecordingVideo
               ? onTakePictureButtonPressed
               : null,
         ),
@@ -531,42 +606,42 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           icon: const Icon(Icons.videocam),
           color: Colors.blue,
           onPressed: cameraController != null &&
-                  cameraController.value.isInitialized &&
-                  !cameraController.value.isRecordingVideo
+              cameraController.value.isInitialized &&
+              !cameraController.value.isRecordingVideo
               ? onVideoRecordButtonPressed
               : null,
         ),
         IconButton(
           icon: cameraController != null &&
-                  cameraController.value.isRecordingPaused
+              cameraController.value.isRecordingPaused
               ? const Icon(Icons.play_arrow)
               : const Icon(Icons.pause),
           color: Colors.blue,
           onPressed: cameraController != null &&
-                  cameraController.value.isInitialized &&
-                  cameraController.value.isRecordingVideo
+              cameraController.value.isInitialized &&
+              cameraController.value.isRecordingVideo
               ? (cameraController.value.isRecordingPaused)
-                  ? onResumeButtonPressed
-                  : onPauseButtonPressed
+              ? onResumeButtonPressed
+              : onPauseButtonPressed
               : null,
         ),
         IconButton(
           icon: const Icon(Icons.stop),
           color: Colors.red,
           onPressed: cameraController != null &&
-                  cameraController.value.isInitialized &&
-                  cameraController.value.isRecordingVideo
+              cameraController.value.isInitialized &&
+              cameraController.value.isRecordingVideo
               ? onStopButtonPressed
               : null,
         ),
         IconButton(
           icon: const Icon(Icons.pause_presentation),
           color:
-              cameraController != null && cameraController.value.isPreviewPaused
-                  ? Colors.red
-                  : Colors.blue,
+          cameraController != null && cameraController.value.isPreviewPaused
+              ? Colors.red
+              : Colors.blue,
           onPressed:
-              cameraController == null ? null : onPausePreviewButtonPressed,
+          cameraController == null ? null : onPausePreviewButtonPressed,
         ),
       ],
     );
@@ -599,12 +674,42 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
               groupValue: controller?.description,
               value: cameraDescription,
               onChanged:
-                  controller != null && controller!.value.isRecordingVideo
-                      ? null
-                      : onChanged,
+              controller != null && controller!.value.isRecordingVideo
+                  ? null
+                  : onChanged,
             ),
           ),
         );
+      }
+    }
+
+    return Row(children: toggles);
+  }
+
+  Widget _lensApertureTogglesRowWidget() {
+    final List<Widget> toggles = <Widget>[];
+
+    void onChanged(double? aperture) {
+      if (aperture == null) {
+        return;
+      }
+      setLensAperture(aperture);
+    }
+
+    if (_availableLensApertures.isEmpty) {
+      return const Text('None');
+    } else {
+      for(final double lensAperture in _availableLensApertures){
+        toggles.add(
+            SizedBox(
+              width: 150,
+              child: RadioListTile<double>(
+                title: Text(lensAperture.toStringAsFixed(2)),
+                groupValue: lensAperture,
+                value: lensAperture,
+                onChanged: onChanged,
+              ),
+            ));
       }
     }
 
@@ -671,12 +776,12 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
         // The exposure mode is currently not supported on the web.
         ...!kIsWeb
             ? <Future<Object?>>[
-                cameraController.getMinExposureOffset().then(
-                    (double value) => _minAvailableExposureOffset = value),
-                cameraController
-                    .getMaxExposureOffset()
-                    .then((double value) => _maxAvailableExposureOffset = value)
-              ]
+          cameraController.getMinExposureOffset().then(
+                  (double value) => _minAvailableExposureOffset = value),
+          cameraController
+              .getMaxExposureOffset()
+              .then((double value) => _maxAvailableExposureOffset = value)
+        ]
             : <Future<Object?>>[],
         cameraController
             .getMaxZoomLevel()
@@ -684,6 +789,41 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
         cameraController
             .getMinZoomLevel()
             .then((double value) => _minAvailableZoom = value),
+
+        cameraController
+            .getMinZoomLevel()
+            .then((double value) => _minAvailableZoom = value),
+
+        cameraController
+            .getMinSensorSensitivity()
+            .then((int value){
+          _currentSensorSensitivity = value;
+          return _minSensorSensitivity = value;
+        }),
+
+        cameraController
+            .getMaxSensorSensitivity()
+            .then((int value) => _maxSensorSensitivity = value),
+
+        cameraController
+            .getMinExposureTime()
+            .then((int value){
+          _currentExposureTime = value;
+          return _minExposureTime = value;
+        }),
+
+        cameraController
+            .getMaxExposureTime()
+            .then((int value) => _maxExposureTime = value),
+
+        cameraController
+            .getAvailableLensApertures()
+            .then((List<double> apertures) => _availableLensApertures = apertures),
+
+        cameraController
+            .getLensAperture()
+            .then((double aperture) => _currentLensAperture = aperture),
+
       ]);
     } on CameraException catch (e) {
       switch (e.code) {
@@ -691,22 +831,22 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           showInSnackBar('You have denied camera access.');
           break;
         case 'CameraAccessDeniedWithoutPrompt':
-          // iOS only
+        // iOS only
           showInSnackBar('Please go to Settings app to enable camera access.');
           break;
         case 'CameraAccessRestricted':
-          // iOS only
+        // iOS only
           showInSnackBar('Camera access is restricted.');
           break;
         case 'AudioAccessDenied':
           showInSnackBar('You have denied audio access.');
           break;
         case 'AudioAccessDeniedWithoutPrompt':
-          // iOS only
+        // iOS only
           showInSnackBar('Please go to Settings app to enable audio access.');
           break;
         case 'AudioAccessRestricted':
-          // iOS only
+        // iOS only
           showInSnackBar('Audio access is restricted.');
           break;
         default:
@@ -982,6 +1122,56 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
       rethrow;
     }
   }
+
+  Future<void> setExposureTime(double duration) async {
+    if (controller == null) {
+      return;
+    }
+
+    setState(() {
+      _currentExposureTime = duration.toInt();
+    });
+    try {
+      duration = (await controller!.setExposureTime(duration.toInt())).toDouble();
+    } on CameraException catch (e) {
+      _showCameraException(e);
+      rethrow;
+    }
+  }
+
+  Future<void> setLensAperture(double aperture) async {
+    if (controller == null) {
+      return;
+    }
+
+    setState(() {
+      _currentLensAperture = aperture;
+    });
+    try {
+      aperture = await controller!.setLensAperture(aperture);
+    } on CameraException catch (e) {
+      _showCameraException(e);
+      rethrow;
+    }
+  }
+
+  Future<void> setSensorSensitivity(double sensitivity) async {
+    if (controller == null) {
+      return;
+    }
+
+    setState(() {
+      _currentSensorSensitivity = sensitivity.toInt();
+    });
+    try {
+      sensitivity = (await controller!.setSensorSensitivity(sensitivity.toInt())).toDouble();
+    } on CameraException catch (e) {
+      _showCameraException(e);
+      rethrow;
+    }
+  }
+
+
 
   Future<void> setFocusMode(FocusMode mode) async {
     if (controller == null) {

@@ -20,10 +20,8 @@ const MethodChannel _channel = MethodChannel('plugins.flutter.io/camera');
 class MethodChannelCamera extends CameraPlatform {
   /// Construct a new method channel camera instance.
   MethodChannelCamera() {
-    const MethodChannel channel =
-        MethodChannel('flutter.io/cameraPlugin/device');
-    channel.setMethodCallHandler(
-        (MethodCall call) => handleDeviceMethodCall(call));
+    const MethodChannel channel = MethodChannel('flutter.io/cameraPlugin/device');
+    channel.setMethodCallHandler((MethodCall call) => handleDeviceMethodCall(call));
   }
 
   final Map<int, MethodChannel> _channels = <int, MethodChannel>{};
@@ -57,14 +55,13 @@ class MethodChannelCamera extends CameraPlatform {
   StreamController<CameraImageData>? _frameStreamController;
 
   Stream<CameraEvent> _cameraEvents(int cameraId) =>
-      cameraEventStreamController.stream
-          .where((CameraEvent event) => event.cameraId == cameraId);
+      cameraEventStreamController.stream.where((CameraEvent event) => event.cameraId == cameraId);
 
   @override
   Future<List<CameraDescription>> availableCameras() async {
     try {
-      final List<Map<dynamic, dynamic>>? cameras = await _channel
-          .invokeListMethod<Map<dynamic, dynamic>>('availableCameras');
+      final List<Map<dynamic, dynamic>>? cameras =
+          await _channel.invokeListMethod<Map<dynamic, dynamic>>('availableCameras');
 
       if (cameras == null) {
         return <CameraDescription>[];
@@ -73,8 +70,7 @@ class MethodChannelCamera extends CameraPlatform {
       return cameras.map((Map<dynamic, dynamic> camera) {
         return CameraDescription(
           name: camera['name']! as String,
-          lensDirection:
-              parseCameraLensDirection(camera['lensFacing']! as String),
+          lensDirection: parseCameraLensDirection(camera['lensFacing']! as String),
           sensorOrientation: camera['sensorOrientation']! as int,
         );
       }).toList();
@@ -90,12 +86,11 @@ class MethodChannelCamera extends CameraPlatform {
     bool enableAudio = false,
   }) async {
     try {
-      final Map<String, dynamic>? reply = await _channel
-          .invokeMapMethod<String, dynamic>('create', <String, dynamic>{
+      final Map<String, dynamic>? reply =
+          await _channel.invokeMapMethod<String, dynamic>('create', <String, dynamic>{
         'cameraName': cameraDescription.name,
-        'resolutionPreset': resolutionPreset != null
-            ? _serializeResolutionPreset(resolutionPreset)
-            : null,
+        'resolutionPreset':
+            resolutionPreset != null ? _serializeResolutionPreset(resolutionPreset) : null,
         'enableAudio': enableAudio,
       });
 
@@ -111,10 +106,8 @@ class MethodChannelCamera extends CameraPlatform {
     ImageFormatGroup imageFormatGroup = ImageFormatGroup.unknown,
   }) {
     _channels.putIfAbsent(cameraId, () {
-      final MethodChannel channel =
-          MethodChannel('flutter.io/cameraPlugin/camera$cameraId');
-      channel.setMethodCallHandler(
-          (MethodCall call) => handleCameraMethodCall(call, cameraId));
+      final MethodChannel channel = MethodChannel('flutter.io/cameraPlugin/camera$cameraId');
+      channel.setMethodCallHandler((MethodCall call) => handleCameraMethodCall(call, cameraId));
       return channel;
     });
 
@@ -191,8 +184,7 @@ class MethodChannelCamera extends CameraPlatform {
 
   @override
   Stream<DeviceOrientationChangedEvent> onDeviceOrientationChanged() {
-    return deviceEventStreamController.stream
-        .whereType<DeviceOrientationChangedEvent>();
+    return deviceEventStreamController.stream.whereType<DeviceOrientationChangedEvent>();
   }
 
   @override
@@ -239,8 +231,7 @@ class MethodChannelCamera extends CameraPlatform {
       _channel.invokeMethod<void>('prepareForVideoRecording');
 
   @override
-  Future<void> startVideoRecording(int cameraId,
-      {Duration? maxVideoDuration}) async {
+  Future<void> startVideoRecording(int cameraId, {Duration? maxVideoDuration}) async {
     await _channel.invokeMethod<void>(
       'startVideoRecording',
       <String, dynamic>{
@@ -274,8 +265,7 @@ class MethodChannelCamera extends CameraPlatform {
       );
 
   @override
-  Future<void> resumeVideoRecording(int cameraId) =>
-      _channel.invokeMethod<void>(
+  Future<void> resumeVideoRecording(int cameraId) => _channel.invokeMethod<void>(
         'resumeVideoRecording',
         <String, dynamic>{'cameraId': cameraId},
       );
@@ -298,8 +288,7 @@ class MethodChannelCamera extends CameraPlatform {
 
   Future<void> _startPlatformStream() async {
     await _channel.invokeMethod<void>('startImageStream');
-    const EventChannel cameraEventChannel =
-        EventChannel('plugins.flutter.io/camera/imageStream');
+    const EventChannel cameraEventChannel = EventChannel('plugins.flutter.io/camera/imageStream');
     _platformImageStreamSubscription =
         cameraEventChannel.receiveBroadcastStream().listen((dynamic imageData) {
       if (defaultTargetPlatform == TargetPlatform.iOS) {
@@ -309,8 +298,7 @@ class MethodChannelCamera extends CameraPlatform {
           throw CameraException(e.code, e.message);
         }
       }
-      _frameStreamController!
-          .add(cameraImageFromPlatformData(imageData as Map<dynamic, dynamic>));
+      _frameStreamController!.add(cameraImageFromPlatformData(imageData as Map<dynamic, dynamic>));
     });
   }
 
@@ -322,13 +310,12 @@ class MethodChannelCamera extends CameraPlatform {
   }
 
   void _onFrameStreamPauseResume() {
-    throw CameraException('InvalidCall',
-        'Pause and resume are not supported for onStreamedFrameAvailable');
+    throw CameraException(
+        'InvalidCall', 'Pause and resume are not supported for onStreamedFrameAvailable');
   }
 
   @override
-  Future<void> setFlashMode(int cameraId, FlashMode mode) =>
-      _channel.invokeMethod<void>(
+  Future<void> setFlashMode(int cameraId, FlashMode mode) => _channel.invokeMethod<void>(
         'setFlashMode',
         <String, dynamic>{
           'cameraId': cameraId,
@@ -337,8 +324,7 @@ class MethodChannelCamera extends CameraPlatform {
       );
 
   @override
-  Future<void> setExposureMode(int cameraId, ExposureMode mode) =>
-      _channel.invokeMethod<void>(
+  Future<void> setExposureMode(int cameraId, ExposureMode mode) => _channel.invokeMethod<void>(
         'setExposureMode',
         <String, dynamic>{
           'cameraId': cameraId,
@@ -406,8 +392,39 @@ class MethodChannelCamera extends CameraPlatform {
   }
 
   @override
-  Future<void> setFocusMode(int cameraId, FocusMode mode) =>
-      _channel.invokeMethod<void>(
+  Future<int> getMaxExposureTime(int cameraId) async {
+    final int? maxExposureTime = await _channel.invokeMethod<int>(
+      'getMaxExposureTime',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return maxExposureTime!;
+  }
+
+  @override
+  Future<int> getMinExposureTime(int cameraId) async {
+    final int? minExposureTime = await _channel.invokeMethod<int>(
+      'getMinExposureTime',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return minExposureTime!;
+  }
+
+  @override
+  Future<int> setExposureTime(int cameraId, int time) async {
+    final int? appliedExposureTime = await _channel.invokeMethod<int>(
+      'setExposureTime',
+      <String, dynamic>{
+        'cameraId': cameraId,
+        'exposureTime': time,
+      },
+    );
+    return appliedExposureTime!;
+  }
+
+  @override
+  Future<void> setFocusMode(int cameraId, FocusMode mode) => _channel.invokeMethod<void>(
         'setFocusMode',
         <String, dynamic>{
           'cameraId': cameraId,
@@ -429,6 +446,61 @@ class MethodChannelCamera extends CameraPlatform {
         'y': point?.y,
       },
     );
+  }
+
+  @override
+  Future<List<double>> availableLensApertures(int cameraId) async{
+    final List<double>? availableLensApertures = await _channel.invokeMethod<List<double>>(
+      'getAvailableLensApertures',
+      <String, dynamic>{
+        'cameraId': cameraId,
+      },
+    );
+    return availableLensApertures!;
+  }
+
+
+  @override
+  Future<double> getLensAperture(int cameraId) async{
+    final double? lensAperture = await _channel.invokeMethod<double>(
+      'getLensAperture',
+      <String, dynamic>{
+        'cameraId': cameraId,
+      },
+    );
+    return lensAperture!;
+  }
+
+  @override
+  Future<int> getMaxSensorSensitivity(int cameraId) async {
+    final int? maxSensorSensitivity = await _channel.invokeMethod<int>(
+      'getMaxSensorSensitivity',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return maxSensorSensitivity!;
+  }
+
+  @override
+  Future<int> getMinSensorSensitivity(int cameraId) async {
+    final int? maxSensorSensitivity = await _channel.invokeMethod<int>(
+      'getMinSensorSensitivity',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return maxSensorSensitivity!;
+  }
+
+  @override
+  Future<int> setSensorSensitivity(int cameraId, int iso) async {
+    final int? appliedSensorSensitivity = await _channel.invokeMethod<int>(
+      'setSensorSensitivity',
+      <String, dynamic>{
+        'cameraId': cameraId,
+        'sensorSensitivity': iso,
+      },
+    );
+    return appliedSensorSensitivity!;
   }
 
   @override
@@ -531,8 +603,7 @@ class MethodChannelCamera extends CameraPlatform {
     switch (call.method) {
       case 'orientation_changed':
         deviceEventStreamController.add(DeviceOrientationChangedEvent(
-            deserializeDeviceOrientation(
-                call.arguments['orientation']! as String)));
+            deserializeDeviceOrientation(call.arguments['orientation']! as String)));
         break;
       default:
         throw MissingPluginException();
@@ -574,8 +645,7 @@ class MethodChannelCamera extends CameraPlatform {
           cameraId,
           XFile(call.arguments['path']! as String),
           call.arguments['maxVideoDuration'] != null
-              ? Duration(
-                  milliseconds: call.arguments['maxVideoDuration']! as int)
+              ? Duration(milliseconds: call.arguments['maxVideoDuration']! as int)
               : null,
         ));
         break;

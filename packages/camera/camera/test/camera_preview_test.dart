@@ -117,6 +117,33 @@ class FakeController extends ValueNotifier<CameraValue>
 
   @override
   Future<void> resumePreview() async {}
+
+  @override
+  Future<List<double>> getAvailableLensApertures() async => List<double>.empty();
+
+  @override
+  Future<double> getLensAperture() async => 1;
+
+  @override
+  Future<int> getMaxExposureTime() async => 1;
+
+  @override
+  Future<int> getMaxSensorSensitivity() async => 1;
+
+  @override
+  Future<int> getMinExposureTime() async => 1;
+
+  @override
+  Future<int> getMinSensorSensitivity() async => 1;
+
+  @override
+  Future<int> setExposureTime(int nanoseconds) async => nanoseconds;
+
+  @override
+  Future<double> setLensAperture(double? aperture) async => aperture!;
+
+  @override
+  Future<int> setSensorSensitivity(int sensorSensitivity) async => sensorSensitivity;
 }
 
 void main() {
