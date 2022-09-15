@@ -68,7 +68,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   int _maxSensorSensitivity = 0;
   int _currentSensorSensitivity = 0;
 
-
+  ExposureMode _currentExposureMode = ExposureMode.auto;
 
   late AnimationController _flashModeControlRowAnimationController;
   late Animation<double> _flashModeControlRowAnimation;
@@ -480,8 +480,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                     min: _minExposureTime.toDouble(),
                     max: _maxExposureTime.toDouble(),
                     label: _currentExposureTime.toString(),
-                    onChanged: _minExposureTime ==
-                        _maxExposureTime
+                    onChanged: (_minExposureTime == _maxExposureTime ||
+                        _currentExposureMode == ExposureMode.auto)
                         ? null
                         : setExposureTime,
                   ),
@@ -511,8 +511,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                     min: _minSensorSensitivity.toDouble(),
                     max: _maxSensorSensitivity.toDouble(),
                     label: _currentExposureOffset.toString(),
-                    onChanged: _minSensorSensitivity ==
-                        _maxSensorSensitivity
+                    onChanged: (_minSensorSensitivity == _maxSensorSensitivity ||
+                        _currentExposureMode == ExposureMode.auto)
                         ? null
                         : setSensorSensitivity,
                   ),
@@ -825,6 +825,15 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
             .then((double aperture) => _currentLensAperture = aperture),
 
       ]);
+
+      cameraController.startImageStream((CameraImage image){
+        if(_currentExposureMode == ExposureMode.auto){
+          _currentSensorSensitivity = image.sensorSensitivity?.toInt() ?? _minSensorSensitivity;
+          _currentExposureTime = image.sensorExposureTime ?? _minExposureTime;
+          setState(() {});
+        }
+      });
+
     } on CameraException catch (e) {
       switch (e.code) {
         case 'CameraAccessDenied':
@@ -942,7 +951,9 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   void onSetExposureModeButtonPressed(ExposureMode mode) {
     setExposureMode(mode).then((_) {
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _currentExposureMode = mode;
+        });
       }
       showInSnackBar('Exposure mode set to ${mode.toString().split('.').last}');
     });
