@@ -208,6 +208,17 @@
       [_camera pauseVideoRecordingWithResult:result];
     } else if ([@"resumeVideoRecording" isEqualToString:call.method]) {
       [_camera resumeVideoRecordingWithResult:result];
+    } else if ([@"getMinSensorSensitivity" isEqualToString:call.method]) {
+      [result sendSuccessWithData:@(_camera.captureDevice.activeFormat.minISO)];
+    } else if ([@"getMaxSensorSensitivity" isEqualToString:call.method]) {
+      [result sendSuccessWithData:@(_camera.captureDevice.activeFormat.maxISO)];
+    }  else if ([@"setSensorSensitivity" isEqualToString:call.method]) {
+      double iso = ((NSNumber *)argsMap[@"sensorSensitivity"]).doubleValue;
+      [_camera setSensorSensitivityWithResult:iso Result:result];
+    } else if ([@"getLensAperture" isEqualToString:call.method]) {
+      [result sendSuccessWithData:@(_camera.captureDevice.lensAperture)];
+    } else if ([@"availableLensApertures" isEqualToString:call.method]) {
+      [result sendSuccessWithData:@(_camera.captureDevice.lensAperture)];
     } else if ([@"getMaxZoomLevel" isEqualToString:call.method]) {
       [_camera getMaxZoomLevelWithResult:result];
     } else if ([@"getMinZoomLevel" isEqualToString:call.method]) {
@@ -237,6 +248,13 @@
     } else if ([@"setExposureOffset" isEqualToString:call.method]) {
       [_camera setExposureOffsetWithResult:result
                                     offset:((NSNumber *)call.arguments[@"offset"]).doubleValue];
+    } else if ([@"getMinExposureTime" isEqualToString:call.method]) {
+      [result sendSuccessWithData:@(CMTimeGetSeconds(_camera.captureDevice.activeFormat.minExposureDuration) * 1000 * 1000 * 1000)];
+    } else if ([@"getMaxExposureTime" isEqualToString:call.method]) {
+      [result sendSuccessWithData:@(CMTimeGetSeconds(_camera.captureDevice.activeFormat.maxExposureDuration) * 1000 * 1000 * 1000)];
+    }  else if ([@"setExposureTime" isEqualToString:call.method]) {
+      [_camera setExposureTimeWithResult:result
+                                    timeInNs:((NSNumber *)call.arguments[@"exposureTime"]).doubleValue];
     } else if ([@"lockCaptureOrientation" isEqualToString:call.method]) {
       [_camera lockCaptureOrientationWithResult:result orientation:call.arguments[@"orientation"]];
     } else if ([@"unlockCaptureOrientation" isEqualToString:call.method]) {

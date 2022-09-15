@@ -89,8 +89,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setExposurePointWithResult:(FLTThreadSafeFlutterResult *)result x:(double)x y:(double)y;
 - (void)setFocusPointWithResult:(FLTThreadSafeFlutterResult *)result x:(double)x y:(double)y;
 - (void)setExposureOffsetWithResult:(FLTThreadSafeFlutterResult *)result offset:(double)offset;
+- (void)getMinExposureTimeWithResult:(FLTThreadSafeFlutterResult *)result;
+- (void)getMaxExposureTimeWithResult:(FLTThreadSafeFlutterResult *)result;
+- (void)setExposureTimeWithResult:(FLTThreadSafeFlutterResult *)result timeInNs:(double)timeInNs;
 - (void)startImageStreamWithMessenger:(NSObject<FlutterBinaryMessenger> *)messenger;
 - (void)stopImageStream;
+- (void)getMinSensorSensitivityWithResult:(FLTThreadSafeFlutterResult *)result;
+- (void)getMaxSensorSensitivityWithResult:(FLTThreadSafeFlutterResult *)result;
+- (void)setSensorSensitivityWithResult:(double)iso Result:(FLTThreadSafeFlutterResult *)result;
 - (void)getMaxZoomLevelWithResult:(FLTThreadSafeFlutterResult *)result;
 - (void)getMinZoomLevelWithResult:(FLTThreadSafeFlutterResult *)result;
 - (void)setZoomLevel:(CGFloat)zoom Result:(FLTThreadSafeFlutterResult *)result;

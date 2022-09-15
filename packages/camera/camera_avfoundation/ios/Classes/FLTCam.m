@@ -957,6 +957,90 @@ NSString *const errorMethod = @"error";
   self.streamingPendingFramesCount--;
 }
 
+
+- (Float64)getMinSensorExposureTimeInNs {
+    if (@available(iOS 11.0, *)) {
+        return CMTimeGetSeconds(_captureDevice.activeFormat.minExposureDuration) * 1000* 1000 * 1000;
+    } else {
+        return 1.0;
+    }
+}
+
+- (Float64)getMaxSensorExposureTimeInNs {
+    if (@available(iOS 11.0, *)) {
+        return CMTimeGetSeconds(_captureDevice.activeFormat.maxExposureDuration) * 1000* 1000 * 1000;
+    } else {
+        return 1.0;
+    }
+}
+
+- (void)getMinExposureTimeWithResult:(FLTThreadSafeFlutterResult *)result {
+    Float64 minSensorSensitivity = [self getMinSensorExposureTimeInNs];
+    [result sendSuccessWithData:[NSNumber numberWithFloat:minSensorSensitivity]];
+}
+
+- (void)getMaxExposureTimeWithResult:(FLTThreadSafeFlutterResult *)result {
+    Float64 maxSensorSensitivity = [self getMaxSensorExposureTimeInNs];
+    [result sendSuccessWithData:[NSNumber numberWithFloat:maxSensorSensitivity]];
+}
+
+- (void)setExposureTimeWithResult:(FLTThreadSafeFlutterResult *)result timeInNs:(double)timeInNs; {
+  Float64 maxExposureDurationInNs = [self getMaxSensorExposureTimeInNs];
+  Float64 minExposureDurationInNs = [self getMinSensorExposureTimeInNs];
+
+  if (maxExposureDurationInNs < timeInNs || minExposureDurationInNs > timeInNs) {
+    NSString *errorMessage = [NSString
+        stringWithFormat:@"Exposure duration level out of bounds (exposure duration level should be between %f and %f, new time : %f).",
+                         minExposureDurationInNs, maxExposureDurationInNs, timeInNs];
+
+    [result sendErrorWithCode:@"EXPOSURE_DURATION_ERROR" message:errorMessage details:nil];
+    return;
+  }
+  NSError *error = nil;
+  if (![_captureDevice lockForConfiguration:&error]) {
+    [result sendError:error];
+    return;
+  }
+  double newDurationInSeconds = timeInNs / (1000 * 1000 * 1000);
+  [_captureDevice setExposureModeCustomWithDuration:CMTimeMakeWithSeconds( newDurationInSeconds, 1000*1000*1000 ) ISO:AVCaptureISOCurrent completionHandler:nil];
+  [_captureDevice unlockForConfiguration];
+  [result sendSuccessWithData:@(timeInNs)];
+}
+
+- (void)getMaxSensorSensitivityWithResult:(FLTThreadSafeFlutterResult *)result {
+    Float64 maxSensorSensitivity = [self getMaxSensorSensitivity];
+    [result sendSuccessWithData:[NSNumber numberWithFloat:maxSensorSensitivity]];
+}
+
+- (void)getMinSensorSensitivityWithResult:(FLTThreadSafeFlutterResult *)result {
+    Float64 minSensorSensitivity = [self getMinSensorSensitivity];
+    [result sendSuccessWithData:[NSNumber numberWithFloat:minSensorSensitivity]];
+}
+
+- (void)setSensorSensitivityWithResult:(double)iso Result:(FLTThreadSafeFlutterResult *)result {
+  Float64 maxAvailableISO = [self getMaxSensorSensitivity];
+  Float64 minAvailableISO = [self getMinSensorSensitivity];
+
+  if (maxAvailableISO < iso || minAvailableISO > iso) {
+    NSString *errorMessage = [NSString
+        stringWithFormat:@"ISO level out of bounds (iso level should be between %f and %f).",
+                         minAvailableISO, maxAvailableISO];
+
+    [result sendErrorWithCode:@"ISO_ERROR" message:errorMessage details:nil];
+    return;
+  }
+
+  NSError *error = nil;
+  if (![_captureDevice lockForConfiguration:&error]) {
+    [result sendError:error];
+    return;
+  }
+
+  [_captureDevice setExposureModeCustomWithDuration:AVCaptureExposureDurationCurrent ISO:iso completionHandler:nil];
+  [_captureDevice unlockForConfiguration];
+  [result sendSuccessWithData:@(iso)];
+}
+
 - (void)getMaxZoomLevelWithResult:(FLTThreadSafeFlutterResult *)result {
   CGFloat maxZoomFactor = [self getMaxAvailableZoomFactor];
 
@@ -990,6 +1074,23 @@ NSString *const errorMethod = @"error";
   [_captureDevice unlockForConfiguration];
 
   [result sendSuccess];
+}
+
+
+- (Float64)getMinSensorSensitivity {
+    if (@available(iOS 11.0, *)) {
+        return _captureDevice.activeFormat.minISO;
+    } else {
+        return 1.0;
+    }
+}
+
+- (Float64)getMaxSensorSensitivity {
+    if (@available(iOS 11.0, *)) {
+        return _captureDevice.activeFormat.maxISO;
+    } else {
+        return 1.0;
+    }
 }
 
 - (CGFloat)getMinAvailableZoomFactor {
@@ -1085,6 +1186,7 @@ NSString *const errorMethod = @"error";
   AVCaptureDevice *audioDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
   AVCaptureDeviceInput *audioInput = [AVCaptureDeviceInput deviceInputWithDevice:audioDevice
                                                                            error:&error];
+  
   if (error) {
     [_methodChannel invokeMethod:errorMethod arguments:error.description];
   }

@@ -411,6 +411,40 @@ class AVFoundationCamera extends CameraPlatform {
     return appliedOffset!;
   }
 
+
+  @override
+  Future<int> getMinExposureTime(int cameraId) async {
+    final double? minExposureTime = await _channel.invokeMethod<double>(
+      'getMinExposureTime',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return minExposureTime!.toInt();
+  }
+
+  @override
+  Future<int> getMaxExposureTime(int cameraId) async {
+    final double? maxExposureTime = await _channel.invokeMethod<double>(
+      'getMaxExposureTime',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return maxExposureTime!.toInt();
+  }
+
+  @override
+  Future<int> setExposureTime(int cameraId, int time) async {
+    final double? appliedExposureTime = await _channel.invokeMethod<double>(
+      'setExposureTime',
+      <String, dynamic>{
+        'cameraId': cameraId,
+        'exposureTime': time,
+      },
+    );
+
+    return appliedExposureTime!.toInt();
+  }
+
   @override
   Future<void> setFocusMode(int cameraId, FocusMode mode) =>
       _channel.invokeMethod<void>(
@@ -435,6 +469,72 @@ class AVFoundationCamera extends CameraPlatform {
         'y': point?.y,
       },
     );
+  }
+
+  @override
+  Future<List<double>> availableLensApertures(int cameraId) async {
+    final double? aperture = await _channel.invokeMethod<double>(
+      'availableLensApertures',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return <double>[aperture!];
+  }
+
+  @override
+  Future<double> getLensAperture(int cameraId) async {
+    final double? aperture = await _channel.invokeMethod<double>(
+      'getLensAperture',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return aperture!;
+  }
+
+  @override
+  Future<double> setLensAperture(int cameraId, double lensAperture) async {
+    final double? appliedLensAperture = await _channel.invokeMethod<double>(
+      'setLensAperture',
+      <String, dynamic>{
+        'cameraId': cameraId,
+        'lensAperture': lensAperture,
+      },
+    );
+
+    return appliedLensAperture!;
+  }
+
+  @override
+  Future<int> getMinSensorSensitivity(int cameraId) async {
+    final double? minSensorSensitivity = await _channel.invokeMethod<double>(
+      'getMinSensorSensitivity',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return minSensorSensitivity!.toInt();
+  }
+
+  @override
+  Future<int> getMaxSensorSensitivity(int cameraId) async {
+    final double? minSensorSensitivity = await _channel.invokeMethod<double>(
+      'getMaxSensorSensitivity',
+      <String, dynamic>{'cameraId': cameraId},
+    );
+
+    return minSensorSensitivity!.toInt();
+  }
+
+  @override
+  Future<int> setSensorSensitivity(int cameraId, int sensorSensitivity) async {
+    final double? appliedSensorSensitivity = await _channel.invokeMethod<double>(
+      'setSensorSensitivity',
+      <String, dynamic>{
+        'cameraId': cameraId,
+        'sensorSensitivity': sensorSensitivity,
+      },
+    );
+
+    return appliedSensorSensitivity!.toInt();
   }
 
   @override

@@ -604,9 +604,8 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
   }
 
-  // Sets the sensor sensitivity for the selected camera
+  /// Sets the sensor sensitivity for the selected camera
   Future<int> setSensorSensitivity(int sensorSensitivity) async {
-
     final List<int> range = await Future.wait(
         <Future<int>>[getMinSensorSensitivity(), getMaxSensorSensitivity()]);
 
