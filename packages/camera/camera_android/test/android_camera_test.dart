@@ -62,7 +62,7 @@ void main() {
             name: 'Test',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 0),
-        ResolutionPreset.high,
+        resolutionPreset : ResolutionPreset.high,
       );
 
       // Assert
@@ -98,7 +98,7 @@ void main() {
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 0,
           ),
-          ResolutionPreset.high,
+          resolutionPreset : ResolutionPreset.high,
         ),
         throwsA(
           isA<CameraException>()
@@ -129,7 +129,7 @@ void main() {
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 0,
           ),
-          ResolutionPreset.high,
+          resolutionPreset : ResolutionPreset.high,
         ),
         throwsA(
           isA<CameraException>()
@@ -191,7 +191,7 @@ void main() {
           lensDirection: CameraLensDirection.back,
           sensorOrientation: 0,
         ),
-        ResolutionPreset.high,
+        resolutionPreset : ResolutionPreset.high,
       );
 
       // Act
@@ -238,7 +238,7 @@ void main() {
           lensDirection: CameraLensDirection.back,
           sensorOrientation: 0,
         ),
-        ResolutionPreset.high,
+        resolutionPreset : ResolutionPreset.high,
       );
       final Future<void> initializeFuture = camera.initializeCamera(cameraId);
       camera.cameraEventStreamController.add(CameraInitializedEvent(
@@ -286,7 +286,7 @@ void main() {
           lensDirection: CameraLensDirection.back,
           sensorOrientation: 0,
         ),
-        ResolutionPreset.high,
+        resolutionPreset : ResolutionPreset.high,
       );
       final Future<void> initializeFuture = camera.initializeCamera(cameraId);
       camera.cameraEventStreamController.add(CameraInitializedEvent(
@@ -458,7 +458,7 @@ void main() {
           lensDirection: CameraLensDirection.back,
           sensorOrientation: 0,
         ),
-        ResolutionPreset.high,
+        resolutionPreset : ResolutionPreset.high,
       );
       final Future<void> initializeFuture = camera.initializeCamera(cameraId);
       camera.cameraEventStreamController.add(

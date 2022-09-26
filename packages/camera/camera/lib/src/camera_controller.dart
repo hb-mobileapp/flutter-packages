@@ -176,16 +176,14 @@ class CameraValue {
       flashMode: flashMode ?? this.flashMode,
       exposureMode: exposureMode ?? this.exposureMode,
       focusMode: focusMode ?? this.focusMode,
-      exposurePointSupported:
-          exposurePointSupported ?? this.exposurePointSupported,
+      exposurePointSupported: exposurePointSupported ?? this.exposurePointSupported,
       focusPointSupported: focusPointSupported ?? this.focusPointSupported,
       deviceOrientation: deviceOrientation ?? this.deviceOrientation,
       lockedCaptureOrientation: lockedCaptureOrientation == null
           ? this.lockedCaptureOrientation
           : lockedCaptureOrientation.orNull,
-      recordingOrientation: recordingOrientation == null
-          ? this.recordingOrientation
-          : recordingOrientation.orNull,
+      recordingOrientation:
+          recordingOrientation == null ? this.recordingOrientation : recordingOrientation.orNull,
       isPreviewPaused: isPreviewPaused ?? this.isPreviewPaused,
       previewPauseOrientation: previewPauseOrientation == null
           ? this.previewPauseOrientation
@@ -224,14 +222,20 @@ class CameraValue {
 class CameraController extends ValueNotifier<CameraValue> {
   /// Creates a new camera controller in an uninitialized state.
   CameraController(
-    this.description,
-    this.resolutionPreset, {
+    this.description, {
+    this.aspectRatio,
+    this.resolutionPreset,
     this.enableAudio = true,
-    this.imageFormatGroup,
+    this.imageFormatGroup = ImageFormatGroup.yuv420,
   }) : super(const CameraValue.uninitialized());
 
   /// The properties of the camera device controlled by this controller.
   final CameraDescription description;
+
+  /// The aspect ratio this controller is targeting.
+  ///
+  /// See also: [AspectRatio].
+  final CameraAspectRatio? aspectRatio;
 
   /// The resolution this controller is targeting.
   ///
@@ -239,7 +243,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// if unavailable a lower resolution will be used.
   ///
   /// See also: [ResolutionPreset].
-  final ResolutionPreset resolutionPreset;
+  final ResolutionPreset? resolutionPreset;
 
   /// Whether to include audio when recording a video.
   final bool enableAudio;
@@ -247,7 +251,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// The [ImageFormatGroup] describes the output of the raw image format.
   ///
   /// When null the imageFormat will fallback to the platforms default.
-  final ImageFormatGroup? imageFormatGroup;
+  final ImageFormatGroup imageFormatGroup;
 
   /// The id of a camera that hasn't been initialized.
   @visibleForTesting
@@ -257,8 +261,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   bool _isDisposed = false;
   StreamSubscription<CameraImageData>? _imageStreamSubscription;
   FutureOr<bool>? _initCalled;
-  StreamSubscription<DeviceOrientationChangedEvent>?
-      _deviceOrientationSubscription;
+  StreamSubscription<DeviceOrientationChangedEvent>? _deviceOrientationSubscription;
 
   /// Checks whether [CameraController.dispose] has completed successfully.
   ///
@@ -294,8 +297,10 @@ class CameraController extends ValueNotifier<CameraValue> {
 
       _cameraId = await CameraPlatform.instance.createCamera(
         description,
-        resolutionPreset,
+        aspectRatio: aspectRatio,
+        resolutionPreset: resolutionPreset,
         enableAudio: enableAudio,
+        imageFormatGroup: imageFormatGroup
       );
 
       _unawaited(CameraPlatform.instance
@@ -312,17 +317,16 @@ class CameraController extends ValueNotifier<CameraValue> {
 
       value = value.copyWith(
         isInitialized: true,
-        previewSize: await _initializeCompleter.future
-            .then((CameraInitializedEvent event) => Size(
-                  event.previewWidth,
-                  event.previewHeight,
-                )),
+        previewSize: await _initializeCompleter.future.then((CameraInitializedEvent event) => Size(
+              event.previewWidth,
+              event.previewHeight,
+            )),
         exposureMode: await _initializeCompleter.future
             .then((CameraInitializedEvent event) => event.exposureMode),
         focusMode: await _initializeCompleter.future
             .then((CameraInitializedEvent event) => event.focusMode),
-        exposurePointSupported: await _initializeCompleter.future.then(
-            (CameraInitializedEvent event) => event.exposurePointSupported),
+        exposurePointSupported: await _initializeCompleter.future
+            .then((CameraInitializedEvent event) => event.exposurePointSupported),
         focusPointSupported: await _initializeCompleter.future
             .then((CameraInitializedEvent event) => event.focusPointSupported),
       );
@@ -523,8 +527,7 @@ class CameraController extends ValueNotifier<CameraValue> {
       );
     }
     try {
-      final XFile file =
-          await CameraPlatform.instance.stopVideoRecording(_cameraId);
+      final XFile file = await CameraPlatform.instance.stopVideoRecording(_cameraId);
       value = value.copyWith(
         isRecordingVideo: false,
         recordingOrientation: const Optional<DeviceOrientation>.absent(),
@@ -583,7 +586,6 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
   }
 
-
   /// Gets the maximum sensor sensitivity  for the selected camera.
   Future<int> getMaxSensorSensitivity() {
     _throwIfNotInitialized('getMaxSensorSensitivity');
@@ -606,8 +608,8 @@ class CameraController extends ValueNotifier<CameraValue> {
 
   /// Sets the sensor sensitivity for the selected camera
   Future<int> setSensorSensitivity(int sensorSensitivity) async {
-    final List<int> range = await Future.wait(
-        <Future<int>>[getMinSensorSensitivity(), getMaxSensorSensitivity()]);
+    final List<int> range =
+        await Future.wait(<Future<int>>[getMinSensorSensitivity(), getMaxSensorSensitivity()]);
 
     if (sensorSensitivity < range[0] || sensorSensitivity > range[1]) {
       throw CameraException(
@@ -682,10 +684,8 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// Supplying a `null` value will reset the exposure point to it's default
   /// value.
   Future<void> setExposurePoint(Offset? point) async {
-    if (point != null &&
-        (point.dx < 0 || point.dx > 1 || point.dy < 0 || point.dy > 1)) {
-      throw ArgumentError(
-          'The values of point should be anywhere between (0,0) and (1,1).');
+    if (point != null && (point.dx < 0 || point.dx > 1 || point.dy < 0 || point.dy > 1)) {
+      throw ArgumentError('The values of point should be anywhere between (0,0) and (1,1).');
     }
 
     try {
@@ -749,8 +749,8 @@ class CameraController extends ValueNotifier<CameraValue> {
   Future<double> setExposureOffset(double offset) async {
     _throwIfNotInitialized('setExposureOffset');
     // Check if offset is in range
-    final List<double> range = await Future.wait(
-        <Future<double>>[getMinExposureOffset(), getMaxExposureOffset()]);
+    final List<double> range =
+        await Future.wait(<Future<double>>[getMinExposureOffset(), getMaxExposureOffset()]);
     if (offset < range[0] || offset > range[1]) {
       throw CameraException(
         'exposureOffsetOutOfBounds',
@@ -777,7 +777,6 @@ class CameraController extends ValueNotifier<CameraValue> {
       throw CameraException(e.code, e.message);
     }
   }
-
 
   /// Gets the minimum supported exposure time for the selected camera.
   Future<int> getMinExposureTime() {
@@ -809,7 +808,6 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
   }
 
-
   /// Gets the supported lens aperture for the selected camera.
   Future<List<double>> getAvailableLensApertures() {
     _throwIfNotInitialized('getAvailableLensApertures');
@@ -833,8 +831,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// Sets lens aperture for the selected camera.
   Future<double> setLensAperture(double? aperture) async {
     if (aperture != null && (aperture < 0)) {
-      throw ArgumentError(
-          'The values of aperture should be more than 0.');
+      throw ArgumentError('The values of aperture should be more than 0.');
     }
 
     try {
@@ -849,11 +846,11 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// If [orientation] is omitted, the current device orientation is used.
   Future<void> lockCaptureOrientation([DeviceOrientation? orientation]) async {
     try {
-      await CameraPlatform.instance.lockCaptureOrientation(
-          _cameraId, orientation ?? value.deviceOrientation);
+      await CameraPlatform.instance
+          .lockCaptureOrientation(_cameraId, orientation ?? value.deviceOrientation);
       value = value.copyWith(
-          lockedCaptureOrientation: Optional<DeviceOrientation>.of(
-              orientation ?? value.deviceOrientation));
+          lockedCaptureOrientation:
+              Optional<DeviceOrientation>.of(orientation ?? value.deviceOrientation));
     } on PlatformException catch (e) {
       throw CameraException(e.code, e.message);
     }
@@ -873,8 +870,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   Future<void> unlockCaptureOrientation() async {
     try {
       await CameraPlatform.instance.unlockCaptureOrientation(_cameraId);
-      value = value.copyWith(
-          lockedCaptureOrientation: const Optional<DeviceOrientation>.absent());
+      value = value.copyWith(lockedCaptureOrientation: const Optional<DeviceOrientation>.absent());
     } on PlatformException catch (e) {
       throw CameraException(e.code, e.message);
     }
@@ -885,10 +881,8 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// Supplying a `null` value will reset the focus point to it's default
   /// value.
   Future<void> setFocusPoint(Offset? point) async {
-    if (point != null &&
-        (point.dx < 0 || point.dx > 1 || point.dy < 0 || point.dy > 1)) {
-      throw ArgumentError(
-          'The values of point should be anywhere between (0,0) and (1,1).');
+    if (point != null && (point.dx < 0 || point.dx > 1 || point.dy < 0 || point.dy > 1)) {
+      throw ArgumentError('The values of point should be anywhere between (0,0) and (1,1).');
     }
     try {
       await CameraPlatform.instance.setFocusPoint(

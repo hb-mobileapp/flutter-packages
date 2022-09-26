@@ -25,7 +25,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
 
     expect(
       () => cameraController.startImageStream((CameraImage image) => null),
@@ -52,7 +52,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
 
     await cameraController.initialize();
 
@@ -75,7 +75,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
     await cameraController.initialize();
 
     cameraController.value =
@@ -95,7 +95,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
     await cameraController.initialize();
 
     await cameraController.startImageStream((CameraImage image) => null);
@@ -110,7 +110,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
 
     expect(
       cameraController.stopImageStream,
@@ -137,7 +137,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
     await cameraController.initialize();
 
     await cameraController.startImageStream((CameraImage image) => null);
@@ -159,7 +159,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
     await cameraController.initialize();
 
     expect(
@@ -177,7 +177,7 @@ void main() {
             name: 'cam',
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 90),
-        ResolutionPreset.max);
+        resolutionPreset : ResolutionPreset.max);
     await cameraController.initialize();
     await cameraController.startImageStream((CameraImage image) => null);
     await cameraController.stopImageStream();

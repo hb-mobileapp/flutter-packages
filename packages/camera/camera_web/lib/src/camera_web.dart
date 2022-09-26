@@ -26,8 +26,7 @@ const String _kDefaultErrorMessage =
 class CameraPlugin extends CameraPlatform {
   /// Creates a new instance of [CameraPlugin]
   /// with the given [cameraService].
-  CameraPlugin({required CameraService cameraService})
-      : _cameraService = cameraService;
+  CameraPlugin({required CameraService cameraService}) : _cameraService = cameraService;
 
   /// Registers this class as the default instance of [CameraPlatform].
   static void registerWith(Registrar registrar) {
@@ -57,24 +56,21 @@ class CameraPlugin extends CameraPlatform {
   final StreamController<CameraEvent> cameraEventStreamController =
       StreamController<CameraEvent>.broadcast();
 
-  final Map<int, StreamSubscription<html.Event>>
-      _cameraVideoErrorSubscriptions = <int, StreamSubscription<html.Event>>{};
+  final Map<int, StreamSubscription<html.Event>> _cameraVideoErrorSubscriptions =
+      <int, StreamSubscription<html.Event>>{};
 
-  final Map<int, StreamSubscription<html.Event>>
-      _cameraVideoAbortSubscriptions = <int, StreamSubscription<html.Event>>{};
+  final Map<int, StreamSubscription<html.Event>> _cameraVideoAbortSubscriptions =
+      <int, StreamSubscription<html.Event>>{};
 
-  final Map<int, StreamSubscription<html.MediaStreamTrack>>
-      _cameraEndedSubscriptions =
+  final Map<int, StreamSubscription<html.MediaStreamTrack>> _cameraEndedSubscriptions =
       <int, StreamSubscription<html.MediaStreamTrack>>{};
 
-  final Map<int, StreamSubscription<html.ErrorEvent>>
-      _cameraVideoRecordingErrorSubscriptions =
+  final Map<int, StreamSubscription<html.ErrorEvent>> _cameraVideoRecordingErrorSubscriptions =
       <int, StreamSubscription<html.ErrorEvent>>{};
 
   /// Returns a stream of camera events for the given [cameraId].
   Stream<CameraEvent> _cameraEvents(int cameraId) =>
-      cameraEventStreamController.stream
-          .where((CameraEvent event) => event.cameraId == cameraId);
+      cameraEventStreamController.stream.where((CameraEvent event) => event.cameraId == cameraId);
 
   /// The current browser window used to access media devices.
   @visibleForTesting
@@ -96,8 +92,7 @@ class CameraPlugin extends CameraPlatform {
       }
 
       // Request video and audio permissions.
-      final html.MediaStream cameraStream =
-          await _cameraService.getMediaStreamForOptions(
+      final html.MediaStream cameraStream = await _cameraService.getMediaStreamForOptions(
         const CameraOptions(
           audio: AudioConstraints(enabled: true),
         ),
@@ -114,14 +109,12 @@ class CameraPlugin extends CameraPlatform {
       // Filter video input devices.
       final Iterable<html.MediaDeviceInfo> videoInputDevices = devices
           .whereType<html.MediaDeviceInfo>()
-          .where((html.MediaDeviceInfo device) =>
-              device.kind == MediaDeviceKind.videoInput)
+          .where((html.MediaDeviceInfo device) => device.kind == MediaDeviceKind.videoInput)
 
           /// The device id property is currently not supported on Internet Explorer:
           /// https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo/deviceId#browser_compatibility
           .where(
-            (html.MediaDeviceInfo device) =>
-                device.deviceId != null && device.deviceId!.isNotEmpty,
+            (html.MediaDeviceInfo device) => device.deviceId != null && device.deviceId!.isNotEmpty,
           );
 
       // Map video input devices to camera descriptions.
@@ -134,13 +127,11 @@ class CameraPlugin extends CameraPlatform {
 
         // Get all video tracks in the video stream
         // to later extract the lens direction from the first track.
-        final List<html.MediaStreamTrack> videoTracks =
-            videoStream.getVideoTracks();
+        final List<html.MediaStreamTrack> videoTracks = videoStream.getVideoTracks();
 
         if (videoTracks.isNotEmpty) {
           // Get the facing mode from the first available video track.
-          final String? facingMode =
-              _cameraService.getFacingModeForVideoTrack(videoTracks.first);
+          final String? facingMode = _cameraService.getFacingModeForVideoTrack(videoTracks.first);
 
           // Get the lens direction based on the facing mode.
           // Fallback to the external lens direction
@@ -196,11 +187,11 @@ class CameraPlugin extends CameraPlatform {
   }
 
   @override
-  Future<int> createCamera(
-    CameraDescription cameraDescription,
-    ResolutionPreset? resolutionPreset, {
-    bool enableAudio = false,
-  }) async {
+  Future<int> createCamera(CameraDescription cameraDescription,
+      {CameraAspectRatio? aspectRatio,
+      ResolutionPreset? resolutionPreset,
+      bool enableAudio = false,
+      ImageFormatGroup imageFormatGroup = ImageFormatGroup.yuv420}) async {
     try {
       if (!camerasMetadata.containsKey(cameraDescription)) {
         throw PlatformException(
@@ -220,8 +211,8 @@ class CameraPlugin extends CameraPlatform {
 
       // Use the highest resolution possible
       // if the resolution preset is not specified.
-      final Size videoSize = _cameraService
-          .mapResolutionPresetToSize(resolutionPreset ?? ResolutionPreset.max);
+      final Size videoSize =
+          _cameraService.mapResolutionPresetToSize(resolutionPreset ?? ResolutionPreset.max);
 
       // Create a camera with the given audio and video constraints.
       // Sensor orientation is currently not supported.
@@ -231,8 +222,7 @@ class CameraPlugin extends CameraPlatform {
         options: CameraOptions(
           audio: AudioConstraints(enabled: enableAudio),
           video: VideoConstraints(
-            facingMode:
-                cameraType != null ? FacingModeConstraint(cameraType) : null,
+            facingMode: cameraType != null ? FacingModeConstraint(cameraType) : null,
             width: VideoSizeConstraint(
               ideal: videoSize.width.toInt(),
             ),
@@ -265,15 +255,13 @@ class CameraPlugin extends CameraPlatform {
 
       // Add camera's video error events to the camera events stream.
       // The error event fires when the video element's source has failed to load, or can't be used.
-      _cameraVideoErrorSubscriptions[cameraId] =
-          camera.videoElement.onError.listen((html.Event _) {
+      _cameraVideoErrorSubscriptions[cameraId] = camera.videoElement.onError.listen((html.Event _) {
         // The Event itself (_) doesn't contain information about the actual error.
         // We need to look at the HTMLMediaElement.error.
         // See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/error
         final html.MediaError error = camera.videoElement.error!;
         final CameraErrorCode errorCode = CameraErrorCode.fromMediaError(error);
-        final String? errorMessage =
-            error.message != '' ? error.message : _kDefaultErrorMessage;
+        final String? errorMessage = error.message != '' ? error.message : _kDefaultErrorMessage;
 
         cameraEventStreamController.add(
           CameraErrorEvent(
@@ -285,8 +273,7 @@ class CameraPlugin extends CameraPlatform {
 
       // Add camera's video abort events to the camera events stream.
       // The abort event fires when the video element's source has not fully loaded.
-      _cameraVideoAbortSubscriptions[cameraId] =
-          camera.videoElement.onAbort.listen((html.Event _) {
+      _cameraVideoAbortSubscriptions[cameraId] = camera.videoElement.onAbort.listen((html.Event _) {
         cameraEventStreamController.add(
           CameraErrorEvent(
             cameraId,
@@ -299,8 +286,7 @@ class CameraPlugin extends CameraPlatform {
 
       // Add camera's closing events to the camera events stream.
       // The onEnded stream fires when there is no more camera stream data.
-      _cameraEndedSubscriptions[cameraId] =
-          camera.onEnded.listen((html.MediaStreamTrack _) {
+      _cameraEndedSubscriptions[cameraId] = camera.onEnded.listen((html.MediaStreamTrack _) {
         cameraEventStreamController.add(
           CameraClosingEvent(cameraId),
         );
@@ -370,8 +356,8 @@ class CameraPlugin extends CameraPlatform {
 
       return orientation.onChange.startWith(initialOrientationEvent).map(
         (html.Event _) {
-          final DeviceOrientation deviceOrientation = _cameraService
-              .mapOrientationTypeToDeviceOrientation(orientation.type!);
+          final DeviceOrientation deviceOrientation =
+              _cameraService.mapOrientationTypeToDeviceOrientation(orientation.type!);
           return DeviceOrientationChangedEvent(deviceOrientation);
         },
       );
@@ -386,8 +372,7 @@ class CameraPlugin extends CameraPlatform {
     DeviceOrientation orientation,
   ) async {
     try {
-      final html.ScreenOrientation? screenOrientation =
-          window?.screen?.orientation;
+      final html.ScreenOrientation? screenOrientation = window?.screen?.orientation;
       final html.Element? documentElement = window?.document.documentElement;
 
       if (screenOrientation != null && documentElement != null) {
@@ -478,8 +463,7 @@ class CameraPlugin extends CameraPlatform {
   @override
   Future<XFile> stopVideoRecording(int cameraId) async {
     try {
-      final XFile videoRecording =
-          await getCamera(cameraId).stopVideoRecording();
+      final XFile videoRecording = await getCamera(cameraId).stopVideoRecording();
       await _cameraVideoRecordingErrorSubscriptions[cameraId]?.cancel();
       return videoRecording;
     } on html.DomException catch (e) {

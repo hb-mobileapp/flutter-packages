@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:camera_example/main.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,17 +34,17 @@ class CameraValue {
   /// Creates a new camera controller state for an uninitialized controller.
   const CameraValue.uninitialized()
       : this(
-          isInitialized: false,
-          isRecordingVideo: false,
-          isTakingPicture: false,
-          isStreamingImages: false,
-          isRecordingPaused: false,
-          flashMode: FlashMode.auto,
-          exposureMode: ExposureMode.auto,
-          focusMode: FocusMode.auto,
-          deviceOrientation: DeviceOrientation.portraitUp,
-          isPreviewPaused: false,
-        );
+    isInitialized: false,
+    isRecordingVideo: false,
+    isTakingPicture: false,
+    isStreamingImages: false,
+    isRecordingPaused: false,
+    flashMode: FlashMode.auto,
+    exposureMode: ExposureMode.auto,
+    focusMode: FocusMode.auto,
+    deviceOrientation: DeviceOrientation.portraitUp,
+    isPreviewPaused: false,
+  );
 
   /// True after [CameraController.initialize] has completed successfully.
   final bool isInitialized;
@@ -164,15 +165,23 @@ class CameraValue {
 /// outside of the overall example code.
 class CameraController extends ValueNotifier<CameraValue> {
   /// Creates a new camera controller in an uninitialized state.
-  CameraController(
-    this.description,
-    this.resolutionPreset, {
+  CameraController(this.description, {
+    this.aspectRatio,
+    this.resolutionPreset,
     this.enableAudio = true,
-    this.imageFormatGroup,
+    this.imageFormatGroup = ImageFormatGroup.yuv420,
   }) : super(const CameraValue.uninitialized());
 
   /// The properties of the camera device controlled by this controller.
   final CameraDescription description;
+
+  /// The aspect ratio this controller is targeting.
+  ///
+  /// This resolution preset is not guaranteed to be available on the device,
+  /// if unavailable a lower resolution will be used.
+  ///
+  /// See also: [CameraAspectRatio].
+  final CameraAspectRatio? aspectRatio;
 
   /// The resolution this controller is targeting.
   ///
@@ -180,7 +189,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// if unavailable a lower resolution will be used.
   ///
   /// See also: [ResolutionPreset].
-  final ResolutionPreset resolutionPreset;
+  final ResolutionPreset? resolutionPreset;
 
   /// Whether to include audio when recording a video.
   final bool enableAudio;
@@ -188,7 +197,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// The [ImageFormatGroup] describes the output of the raw image format.
   ///
   /// When null the imageFormat will fallback to the platforms default.
-  final ImageFormatGroup? imageFormatGroup;
+  final ImageFormatGroup imageFormatGroup;
 
   late int _cameraId;
 
@@ -196,7 +205,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   StreamSubscription<CameraImageData>? _imageStreamSubscription;
   FutureOr<bool>? _initCalled;
   StreamSubscription<DeviceOrientationChangedEvent>?
-      _deviceOrientationSubscription;
+  _deviceOrientationSubscription;
 
   /// The camera identifier with which the controller is associated.
   int get cameraId => _cameraId;
@@ -204,7 +213,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// Initializes the camera on the device.
   Future<void> initialize() async {
     final Completer<CameraInitializedEvent> _initializeCompleter =
-        Completer<CameraInitializedEvent>();
+    Completer<CameraInitializedEvent>();
 
     _deviceOrientationSubscription = CameraPlatform.instance
         .onDeviceOrientationChanged()
@@ -216,8 +225,10 @@ class CameraController extends ValueNotifier<CameraValue> {
 
     _cameraId = await CameraPlatform.instance.createCamera(
       description,
-      resolutionPreset,
+      resolutionPreset: resolutionPreset,
+      aspectRatio: aspectRatio,
       enableAudio: enableAudio,
+      imageFormatGroup: imageFormatGroup
     );
 
     CameraPlatform.instance
@@ -235,10 +246,11 @@ class CameraController extends ValueNotifier<CameraValue> {
     value = value.copyWith(
       isInitialized: true,
       previewSize: await _initializeCompleter.future
-          .then((CameraInitializedEvent event) => Size(
-                event.previewWidth,
-                event.previewHeight,
-              )),
+          .then((CameraInitializedEvent event) =>
+          Size(
+            event.previewWidth,
+            event.previewHeight,
+          )),
       exposureMode: await _initializeCompleter.future
           .then((CameraInitializedEvent event) => event.exposureMode),
       focusMode: await _initializeCompleter.future
@@ -285,8 +297,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   }
 
   /// Start streaming images from platform camera.
-  Future<void> startImageStream(
-      Function(CameraImageData image) onAvailable) async {
+  Future<void> startImageStream(Function(CameraImageData image) onAvailable) async {
     _imageStreamSubscription = CameraPlatform.instance
         .onStreamedFrameAvailable(_cameraId)
         .listen((CameraImageData imageData) {
@@ -320,7 +331,7 @@ class CameraController extends ValueNotifier<CameraValue> {
   /// Throws a [CameraException] if the capture failed.
   Future<XFile> stopVideoRecording() async {
     final XFile file =
-        await CameraPlatform.instance.stopVideoRecording(_cameraId);
+    await CameraPlatform.instance.stopVideoRecording(_cameraId);
     value = value.copyWith(
       isRecordingVideo: false,
       recordingOrientation: const Optional<DeviceOrientation>.absent(),
@@ -371,7 +382,7 @@ class CameraController extends ValueNotifier<CameraValue> {
 
     // Round to the closest step if needed
     final double stepSize =
-        await CameraPlatform.instance.getExposureOffsetStepSize(_cameraId);
+    await CameraPlatform.instance.getExposureOffsetStepSize(_cameraId);
     if (stepSize > 0) {
       final double inv = 1.0 / stepSize;
       double roundedOffset = (offset * inv).roundToDouble() / inv;
@@ -395,7 +406,7 @@ class CameraController extends ValueNotifier<CameraValue> {
         .lockCaptureOrientation(_cameraId, value.deviceOrientation);
     value = value.copyWith(
         lockedCaptureOrientation:
-            Optional<DeviceOrientation>.of(value.deviceOrientation));
+        Optional<DeviceOrientation>.of(value.deviceOrientation));
   }
 
   /// Unlocks the capture orientation.

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:camera/camera.dart';
+import 'package:camera_platform_interface/src/types/aspect_ratio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -144,6 +145,9 @@ class FakeController extends ValueNotifier<CameraValue>
 
   @override
   Future<int> setSensorSensitivity(int sensorSensitivity) async => sensorSensitivity;
+
+  @override
+  CameraAspectRatio? get aspectRatio => CameraAspectRatio.RATIO_4_3;
 }
 
 void main() {

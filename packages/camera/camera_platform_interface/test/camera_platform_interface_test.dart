@@ -163,7 +163,7 @@ void main() {
             lensDirection: CameraLensDirection.back,
             sensorOrientation: 0,
           ),
-          ResolutionPreset.high,
+          resolutionPreset : ResolutionPreset.high,
         ),
         throwsUnimplementedError,
       );

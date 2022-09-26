@@ -84,7 +84,7 @@ void main() {
         for (final MapEntry<ResolutionPreset, Size> preset
             in presetExpectedSizes.entries) {
           final CameraController controller =
-              CameraController(cameraDescription, preset.key);
+              CameraController(cameraDescription, resolutionPreset : preset.key);
           await controller.initialize();
           final bool presetExactlySupported =
               await testCaptureImageResolution(controller, preset.key);
@@ -139,7 +139,7 @@ void main() {
         for (final MapEntry<ResolutionPreset, Size> preset
             in presetExpectedSizes.entries) {
           final CameraController controller =
-              CameraController(cameraDescription, preset.key);
+              CameraController(cameraDescription, resolutionPreset: preset.key);
           await controller.initialize();
           await controller.prepareForVideoRecording();
           final bool presetExactlySupported =
@@ -164,7 +164,7 @@ void main() {
 
     final CameraController controller = CameraController(
       cameras[0],
-      ResolutionPreset.low,
+      resolutionPreset : ResolutionPreset.low,
       enableAudio: false,
     );
 
@@ -220,7 +220,7 @@ void main() {
 
       final CameraController controller = CameraController(
         cameras[0],
-        ResolutionPreset.low,
+        resolutionPreset : ResolutionPreset.low,
         enableAudio: false,
       );
 

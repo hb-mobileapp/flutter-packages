@@ -651,11 +651,13 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
       await oldController.dispose();
     }
 
+
     final CameraController cameraController = CameraController(
       cameraDescription,
-      kIsWeb ? ResolutionPreset.max : ResolutionPreset.medium,
+      aspectRatio: CameraAspectRatio.RATIO_4_3,
+      resolutionPreset: kIsWeb ? ResolutionPreset.max : ResolutionPreset.medium,
       enableAudio: enableAudio,
-      imageFormatGroup: ImageFormatGroup.jpeg,
+      imageFormatGroup: ImageFormatGroup.jpeg
     );
 
     controller = cameraController;
