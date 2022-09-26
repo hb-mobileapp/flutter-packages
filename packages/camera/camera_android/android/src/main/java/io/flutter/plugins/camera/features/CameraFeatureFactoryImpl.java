@@ -18,11 +18,13 @@ import io.flutter.plugins.camera.features.focuspoint.FocusPointFeature;
 import io.flutter.plugins.camera.features.fpsrange.FpsRangeFeature;
 import io.flutter.plugins.camera.features.lensaperture.LensApertureFeature;
 import io.flutter.plugins.camera.features.noisereduction.NoiseReductionFeature;
+import io.flutter.plugins.camera.features.resolution.AspectRatioFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionPreset;
 import io.flutter.plugins.camera.features.sensororientation.SensorOrientationFeature;
 import io.flutter.plugins.camera.features.sensorsensitivity.SensorSensitivityFeature;
 import io.flutter.plugins.camera.features.zoomlevel.ZoomLevelFeature;
+import io.flutter.plugins.camera.types.AspectRatio;
 
 /**
  * Implementation of the {@link CameraFeatureFactory} interface creating the supported feature
@@ -30,6 +32,11 @@ import io.flutter.plugins.camera.features.zoomlevel.ZoomLevelFeature;
  * android.hardware.camera2.CaptureRequest}.
  */
 public class CameraFeatureFactoryImpl implements CameraFeatureFactory {
+
+    @Override
+    public AspectRatioFeature createAspectRatioFeature(@NonNull CameraProperties cameraProperties, AspectRatio initialSetting, int imageFormat, String cameraName) {
+        return new AspectRatioFeature(cameraProperties, initialSetting, imageFormat, cameraName);
+    }
 
     @Override
     public AutoFocusFeature createAutoFocusFeature(

@@ -5,6 +5,7 @@
 package io.flutter.plugins.camera;
 
 import android.app.Activity;
+import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,6 +24,7 @@ import io.flutter.plugins.camera.features.autofocus.FocusMode;
 import io.flutter.plugins.camera.features.exposurelock.ExposureMode;
 import io.flutter.plugins.camera.features.flash.FlashMode;
 import io.flutter.plugins.camera.features.resolution.ResolutionPreset;
+import io.flutter.plugins.camera.types.AspectRatio;
 import io.flutter.view.TextureRegistry;
 
 import java.util.HashMap;
@@ -423,9 +425,28 @@ final class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
         methodChannel.setMethodCallHandler(null);
     }
 
+    // TODO(nm-jiwonhae) : fix error messsage
+    private int getImageFormat(String format){
+        if(format.equals("yuv420")){
+            return ImageFormat.YUV_420_888;
+        }
+
+        if(format.equals("jpeg")){
+            return ImageFormat.JPEG;
+        }
+
+        throw new IllegalArgumentException(
+                "No image format available for the device");
+
+    }
+
+    // TODO (nm-jiwonhae) : TODO implement aspect ratio
     private void instantiateCamera(MethodCall call, Result result) throws CameraAccessException {
         String cameraName = call.argument("cameraName");
+        String ratio = call.argument("aspectRatio");
+        String format = call.argument("imageFormatGroup");
         String preset = call.argument("resolutionPreset");
+        String imageFormat = call.argument("imageFormatGroup");
         boolean enableAudio = call.argument("enableAudio");
 
         TextureRegistry.SurfaceTextureEntry flutterSurfaceTexture =
@@ -435,7 +456,9 @@ final class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
                         messenger, flutterSurfaceTexture.id(), new Handler(Looper.getMainLooper()));
         CameraProperties cameraProperties =
                 new CameraPropertiesImpl(cameraName, CameraUtils.getCameraManager(activity));
-        ResolutionPreset resolutionPreset = ResolutionPreset.valueOf(preset);
+
+        ResolutionPreset resolutionPreset = (preset != null && !preset.isEmpty()) ? ResolutionPreset.valueOf(preset) : null;
+        AspectRatio aspectRatio = (ratio != null && !ratio.isEmpty()) ? AspectRatio.valueOf(ratio) : null;
 
         camera =
                 new Camera(
@@ -444,7 +467,9 @@ final class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
                         new CameraFeatureFactoryImpl(),
                         dartMessenger,
                         cameraProperties,
+                        aspectRatio,
                         resolutionPreset,
+                        imageFormat,
                         enableAudio);
 
         Map<String, Object> reply = new HashMap<>();

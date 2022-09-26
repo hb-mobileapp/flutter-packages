@@ -47,10 +47,11 @@ abstract class CameraPlatform extends PlatformInterface {
 
   /// Creates an uninitialized camera instance and returns the cameraId.
   Future<int> createCamera(
-    CameraDescription cameraDescription,
-    ResolutionPreset? resolutionPreset, {
-    bool enableAudio = false,
-  }) {
+      CameraDescription cameraDescription,
+      {CameraAspectRatio? aspectRatio,
+      ResolutionPreset? resolutionPreset,
+      bool enableAudio = false,
+      ImageFormatGroup imageFormatGroup = ImageFormatGroup.yuv420}) {
     throw UnimplementedError('createCamera() is not implemented.');
   }
 
@@ -98,13 +99,11 @@ abstract class CameraPlatform extends PlatformInterface {
   /// Implementations for this:
   /// - Should support all 4 orientations.
   Stream<DeviceOrientationChangedEvent> onDeviceOrientationChanged() {
-    throw UnimplementedError(
-        'onDeviceOrientationChanged() is not implemented.');
+    throw UnimplementedError('onDeviceOrientationChanged() is not implemented.');
   }
 
   /// Locks the capture orientation.
-  Future<void> lockCaptureOrientation(
-      int cameraId, DeviceOrientation orientation) {
+  Future<void> lockCaptureOrientation(int cameraId, DeviceOrientation orientation) {
     throw UnimplementedError('lockCaptureOrientation() is not implemented.');
   }
 
@@ -184,9 +183,8 @@ abstract class CameraPlatform extends PlatformInterface {
     throw UnimplementedError('getLensAperture() is not implemented.');
   }
 
-
   /// Sets the lens aperture for exposure control.
-  Future<double> setLensAperture(int cameraId, double aperture){
+  Future<double> setLensAperture(int cameraId, double aperture) {
     throw UnimplementedError('setLensAperture() is not implemented.');
   }
 
@@ -283,9 +281,8 @@ abstract class CameraPlatform extends PlatformInterface {
     throw UnimplementedError('getMinExposureOffset() is not implemented.');
   }
 
-
   /// Sets sensor sensitivity for the selected camera.
-  Future<int> setSensorSensitivity(int cameraId, int sensorSensitivity){
+  Future<int> setSensorSensitivity(int cameraId, int sensorSensitivity) {
     throw UnimplementedError('setSensorSensitivity() is not implemented.');
   }
 
