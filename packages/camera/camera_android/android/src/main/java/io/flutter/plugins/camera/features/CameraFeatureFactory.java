@@ -18,17 +18,34 @@ import io.flutter.plugins.camera.features.focuspoint.FocusPointFeature;
 import io.flutter.plugins.camera.features.fpsrange.FpsRangeFeature;
 import io.flutter.plugins.camera.features.lensaperture.LensApertureFeature;
 import io.flutter.plugins.camera.features.noisereduction.NoiseReductionFeature;
+import io.flutter.plugins.camera.features.resolution.AspectRatioFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionPreset;
 import io.flutter.plugins.camera.features.sensororientation.SensorOrientationFeature;
 import io.flutter.plugins.camera.features.sensorsensitivity.SensorSensitivityFeature;
 import io.flutter.plugins.camera.features.zoomlevel.ZoomLevelFeature;
+import io.flutter.plugins.camera.types.AspectRatio;
 
 /**
  * Factory for creating the supported feature implementation controlling different aspects of the
  * {@link android.hardware.camera2.CaptureRequest}.
  */
 public interface CameraFeatureFactory {
+
+    /**
+     * Creates a new instance of the resolution feature.
+     *
+     * @param cameraProperties instance of the CameraProperties class containing information about the
+     *                         cameras features.
+     * @param initialSetting   initial resolution preset.
+     * @param cameraName       the name of the camera which can be used to identify the camera device.
+     * @return newly created instance of the ResolutionFeature class.
+     */
+    AspectRatioFeature createAspectRatioFeature(
+            @NonNull CameraProperties cameraProperties,
+            AspectRatio initialSetting,
+            int imageFormat,
+            String cameraName);
 
     /**
      * Creates a new instance of the auto focus feature.

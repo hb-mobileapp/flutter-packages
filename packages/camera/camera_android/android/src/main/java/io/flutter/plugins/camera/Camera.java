@@ -56,6 +56,7 @@ import io.flutter.plugins.camera.features.flash.FlashFeature;
 import io.flutter.plugins.camera.features.flash.FlashMode;
 import io.flutter.plugins.camera.features.focuspoint.FocusPointFeature;
 import io.flutter.plugins.camera.features.lensaperture.LensApertureFeature;
+import io.flutter.plugins.camera.features.resolution.AspectRatioFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionPreset;
 import io.flutter.plugins.camera.features.sensororientation.DeviceOrientationManager;
@@ -63,6 +64,7 @@ import io.flutter.plugins.camera.features.sensororientation.SensorOrientationFea
 import io.flutter.plugins.camera.features.sensorsensitivity.SensorSensitivityFeature;
 import io.flutter.plugins.camera.features.zoomlevel.ZoomLevelFeature;
 import io.flutter.plugins.camera.media.MediaRecorderBuilder;
+import io.flutter.plugins.camera.types.AspectRatio;
 import io.flutter.plugins.camera.types.CameraCaptureProperties;
 import io.flutter.plugins.camera.types.CaptureTimeoutsWrapper;
 import io.flutter.view.TextureRegistry.SurfaceTextureEntry;
@@ -221,7 +223,9 @@ class Camera
             final CameraFeatureFactory cameraFeatureFactory,
             final DartMessenger dartMessenger,
             final CameraProperties cameraProperties,
+            final AspectRatio aspectRatio,
             final ResolutionPreset resolutionPreset,
+            final String imageFormatGroup,
             final boolean enableAudio) {
 
         if (activity == null) {
@@ -234,9 +238,8 @@ class Camera
         this.applicationContext = activity.getApplicationContext();
         this.cameraProperties = cameraProperties;
         this.cameraFeatureFactory = cameraFeatureFactory;
-        this.cameraFeatures =
-                CameraFeatures.init(
-                        cameraFeatureFactory, cameraProperties, activity, dartMessenger, resolutionPreset);
+        this.cameraFeatures = CameraFeatures.init(
+                cameraFeatureFactory, cameraProperties, activity, dartMessenger, aspectRatio, resolutionPreset, supportedImageFormats.get(imageFormatGroup));
 
         // Create capture callback.
         captureTimeouts = new CaptureTimeoutsWrapper(3000, 3000);
@@ -245,6 +248,7 @@ class Camera
 
         startBackgroundThread();
     }
+
 
     @Override
     public void onConverged() {
@@ -300,8 +304,11 @@ class Camera
     @SuppressLint("MissingPermission")
     public void open(String imageFormatGroup) throws CameraAccessException {
         final ResolutionFeature resolutionFeature = cameraFeatures.getResolution();
+        final AspectRatioFeature aspectRatioFeature = cameraFeatures.getAspectRatio();
 
-        if (!resolutionFeature.checkIsSupported()) {
+        final boolean isSupported = resolutionFeature != null ? resolutionFeature.checkIsSupported() : aspectRatioFeature.checkIsSupported();
+
+        if (!isSupported) {
             // Tell the user that the camera they are trying to open is not supported,
             // as its {@link android.media.CamcorderProfile} cannot be fetched due to the name
             // not being a valid parsable integer.
@@ -312,11 +319,15 @@ class Camera
             return;
         }
 
+
+        final int captureWidth = resolutionFeature != null ? resolutionFeature.getCaptureSize().getWidth() : aspectRatioFeature.getCaptureSize().getWidth();
+        final int captureHeight = resolutionFeature != null ? resolutionFeature.getCaptureSize().getHeight() : aspectRatioFeature.getCaptureSize().getHeight();
+
         // Always capture using JPEG format.
         pictureImageReader =
                 ImageReader.newInstance(
-                        resolutionFeature.getCaptureSize().getWidth(),
-                        resolutionFeature.getCaptureSize().getHeight(),
+                        captureWidth,
+                        captureHeight,
                         ImageFormat.JPEG,
                         1);
 
@@ -326,10 +337,17 @@ class Camera
             Log.w(TAG, "The selected imageFormatGroup is not supported by Android. Defaulting to yuv420");
             imageFormat = ImageFormat.YUV_420_888;
         }
+
+        final int previewWidth = resolutionFeature != null ? resolutionFeature.getPreviewSize().getWidth() : aspectRatioFeature.getPreviewSize().getWidth();
+        final int previewHeight = resolutionFeature != null ? resolutionFeature.getPreviewSize().getHeight() : aspectRatioFeature.getPreviewSize().getHeight();
+
+
+        Log.d(TAG, "preview size : " + previewWidth + "x" + previewHeight);
+
         imageStreamReader =
                 ImageReader.newInstance(
-                        resolutionFeature.getPreviewSize().getWidth(),
-                        resolutionFeature.getPreviewSize().getHeight(),
+                        previewWidth,
+                        previewHeight,
                         imageFormat,
                         1);
 
@@ -340,17 +358,20 @@ class Camera
                 new CameraDevice.StateCallback() {
                     @Override
                     public void onOpened(@NonNull CameraDevice device) {
+                        Log.d(TAG, "camera opened");
+
                         cameraDevice = new DefaultCameraDeviceWrapper(device);
                         try {
                             startPreview();
                             dartMessenger.sendCameraInitializedEvent(
-                                    resolutionFeature.getPreviewSize().getWidth(),
-                                    resolutionFeature.getPreviewSize().getHeight(),
+                                    previewWidth,
+                                    previewHeight,
                                     cameraFeatures.getExposureLock().getValue(),
                                     cameraFeatures.getAutoFocus().getValue(),
                                     cameraFeatures.getExposurePoint().checkIsSupported(),
                                     cameraFeatures.getFocusPoint().checkIsSupported());
                         } catch (CameraAccessException e) {
+                            Log.d(TAG, "camera open error " + e.getMessage());
                             dartMessenger.sendCameraErrorEvent(e.getMessage());
                             close();
                         }
@@ -421,10 +442,16 @@ class Camera
 
         // Build Flutter surface to render to.
         ResolutionFeature resolutionFeature = cameraFeatures.getResolution();
+        AspectRatioFeature aspectRatioFeature = cameraFeatures.getAspectRatio();
+
+        final int previewWidth = resolutionFeature != null ? resolutionFeature.getPreviewSize().getWidth() : aspectRatioFeature.getPreviewSize().getWidth();
+        final int previewHeight = resolutionFeature != null ? resolutionFeature.getPreviewSize().getHeight() : aspectRatioFeature.getPreviewSize().getHeight();
+
+        Log.d(TAG, "capture size : " + previewWidth + "x" + previewHeight);
+
         SurfaceTexture surfaceTexture = flutterTexture.surfaceTexture();
         surfaceTexture.setDefaultBufferSize(
-                resolutionFeature.getPreviewSize().getWidth(),
-                resolutionFeature.getPreviewSize().getHeight());
+                previewWidth, previewHeight);
         Surface flutterSurface = new Surface(surfaceTexture);
         previewRequestBuilder.addTarget(flutterSurface);
 

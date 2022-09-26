@@ -89,17 +89,22 @@ class AndroidCamera extends CameraPlatform {
 
   @override
   Future<int> createCamera(
-    CameraDescription cameraDescription,
-    ResolutionPreset? resolutionPreset, {
+    CameraDescription cameraDescription, {
+    CameraAspectRatio? aspectRatio,
+    ResolutionPreset? resolutionPreset,
+    ImageFormatGroup? imageFormatGroup = ImageFormatGroup.yuv420,
     bool enableAudio = false,
   }) async {
     try {
       final Map<String, dynamic>? reply =
           await _channel.invokeMapMethod<String, dynamic>('create', <String, dynamic>{
         'cameraName': cameraDescription.name,
+        'aspectRatio': aspectRatio != null ? _serializeAspectRatio(aspectRatio) : null,
         'resolutionPreset':
             resolutionPreset != null ? _serializeResolutionPreset(resolutionPreset) : null,
         'enableAudio': enableAudio,
+        'imageFormatGroup':
+            imageFormatGroup != null ? _serializeImageFormatGroup(imageFormatGroup) : null
       });
 
       return reply!['cameraId']! as int;
@@ -587,6 +592,31 @@ class AndroidCamera extends CameraPlatform {
         return 'torch';
       default:
         throw ArgumentError('Unknown FlashMode value');
+    }
+  }
+
+  String _serializeAspectRatio(CameraAspectRatio cameraAspectRatio) {
+    switch (cameraAspectRatio) {
+      case CameraAspectRatio.RATIO_4_3:
+        return 'RATIO_4_3';
+      case CameraAspectRatio.RATIO_16_9:
+        return 'RATIO_16_9';
+
+      default:
+        throw ArgumentError('Unknown CameraAspectRatio value');
+    }
+  }
+
+  String _serializeImageFormatGroup(ImageFormatGroup imageFormatGroup) {
+    switch (imageFormatGroup) {
+      case ImageFormatGroup.yuv420:
+        return 'yuv420';
+      case ImageFormatGroup.jpeg:
+        return 'jpeg';
+      case ImageFormatGroup.bgra8888:
+        return 'bgra8888';
+      default:
+        throw ArgumentError('Unknown ImageFormatGroup value');
     }
   }
 
