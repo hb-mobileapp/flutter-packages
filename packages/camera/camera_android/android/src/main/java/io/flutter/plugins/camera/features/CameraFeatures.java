@@ -17,11 +17,14 @@ import io.flutter.plugins.camera.features.focuspoint.FocusPointFeature;
 import io.flutter.plugins.camera.features.fpsrange.FpsRangeFeature;
 import io.flutter.plugins.camera.features.lensaperture.LensApertureFeature;
 import io.flutter.plugins.camera.features.noisereduction.NoiseReductionFeature;
+import io.flutter.plugins.camera.features.resolution.AspectRatioFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionFeature;
 import io.flutter.plugins.camera.features.resolution.ResolutionPreset;
 import io.flutter.plugins.camera.features.sensororientation.SensorOrientationFeature;
 import io.flutter.plugins.camera.features.sensorsensitivity.SensorSensitivityFeature;
 import io.flutter.plugins.camera.features.zoomlevel.ZoomLevelFeature;
+import io.flutter.plugins.camera.types.AspectRatio;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +34,7 @@ import java.util.Map;
  * in a simpler way.
  */
 public class CameraFeatures {
+    private static final String ASPECT_RATIO = "ASPECT_RATIO";
     private static final String AUTO_FOCUS = "AUTO_FOCUS";
     private static final String EXPOSURE_LOCK = "EXPOSURE_LOCK";
     private static final String EXPOSURE_OFFSET = "EXPOSURE_OFFSET";
@@ -55,8 +59,20 @@ public class CameraFeatures {
             CameraProperties cameraProperties,
             Activity activity,
             DartMessenger dartMessenger,
-            ResolutionPreset resolutionPreset) {
+            AspectRatio aspectRatio,
+            ResolutionPreset resolutionPreset,
+            int imageFormat) {
+
+        if(resolutionPreset != null && aspectRatio != null){
+            throw new IllegalArgumentException(
+                    "Cannot use both resolution and aspect ratio on the same camera");
+        }
+
         CameraFeatures cameraFeatures = new CameraFeatures();
+        if(aspectRatio != null){
+            cameraFeatures.setAspectRatio(cameraFeatureFactory.createAspectRatioFeature(cameraProperties, aspectRatio, imageFormat, cameraProperties.getCameraName()));
+        }
+
         cameraFeatures.setAutoFocus(
                 cameraFeatureFactory.createAutoFocusFeature(cameraProperties, false));
         cameraFeatures.setExposureLock(
@@ -78,9 +94,13 @@ public class CameraFeatures {
         cameraFeatures.setLensAperture(cameraFeatureFactory.createLensApertureFeature(cameraProperties));
         cameraFeatures.setNoiseReduction(
                 cameraFeatureFactory.createNoiseReductionFeature(cameraProperties));
-        cameraFeatures.setResolution(
-                cameraFeatureFactory.createResolutionFeature(
-                        cameraProperties, resolutionPreset, cameraProperties.getCameraName()));
+
+        if(resolutionPreset != null){
+            cameraFeatures.setResolution(
+                    cameraFeatureFactory.createResolutionFeature(
+                            cameraProperties, resolutionPreset, cameraProperties.getCameraName()));
+        }
+
         cameraFeatures.setSensorSensitivity(cameraFeatureFactory.createSensorSensitivityFeature(cameraProperties));
         cameraFeatures.setZoomLevel(cameraFeatureFactory.createZoomLevelFeature(cameraProperties));
         return cameraFeatures;
@@ -97,6 +117,25 @@ public class CameraFeatures {
         return this.featureMap.values();
     }
 
+
+    /**
+     * Sets the instance of the auto focus feature.
+     *
+     * @param aspectRatio the {@link AspectRatioFeature} instance to set.
+     */
+    public void setAspectRatio(AspectRatioFeature aspectRatio) {
+        this.featureMap.put(ASPECT_RATIO, aspectRatio);
+    }
+
+    /**
+     * Gets the aspect ratio feature if it has been set.
+     *
+     * @return the aspect ratio feature.
+     */
+    public AspectRatioFeature getAspectRatio() {
+        return (AspectRatioFeature) featureMap.get(ASPECT_RATIO);
+    }
+
     /**
      * Gets the auto focus feature if it has been set.
      *
@@ -105,6 +144,7 @@ public class CameraFeatures {
     public AutoFocusFeature getAutoFocus() {
         return (AutoFocusFeature) featureMap.get(AUTO_FOCUS);
     }
+
 
     /**
      * Sets the instance of the auto focus feature.

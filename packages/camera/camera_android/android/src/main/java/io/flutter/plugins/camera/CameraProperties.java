@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build.VERSION_CODES;
 import android.util.Range;
 import android.util.Rational;
@@ -271,6 +272,11 @@ public interface CameraProperties {
      * @return int[] List of noise reduction modes that are supported by this camera device.
      */
     int[] getAvailableNoiseReductionModes();
+
+
+    StreamConfigurationMap getConfigurationMap();
+
+    boolean isSensorLandscapeResolution();
 }
 
 /**
@@ -398,5 +404,19 @@ class CameraPropertiesImpl implements CameraProperties {
     public int[] getAvailableNoiseReductionModes() {
         return cameraCharacteristics.get(
                 CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
+    }
+
+    @Override
+    public StreamConfigurationMap getConfigurationMap() {
+        return cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+    }
+
+    @Override
+    public boolean isSensorLandscapeResolution() {
+        Size pixelArraySize = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+
+        // Make the default value is true since usually the sensor resolution is landscape.
+        return pixelArraySize != null ? pixelArraySize.getWidth() >= pixelArraySize.getHeight()
+                : true;
     }
 }
