@@ -10,6 +10,11 @@
 @import CoreMotion;
 #import <libkern/OSAtomic.h>
 
+#define ASPECT_RATIO_4_3 [NSNumber numberWithFloat:4.0/3.0]
+#define ASPECT_RATIO_3_4 [NSNumber numberWithFloat:3.0/4.0]
+#define ASPECT_RATIO_16_9 [NSNumber numberWithFloat:16.0/9.0]
+#define ASPECT_RATIO_9_16 [NSNumber numberWithFloat:9.0/16.0]
+
 @implementation FLTImageStreamHandler
 
 - (instancetype)initWithCaptureSessionQueue:(dispatch_queue_t)captureSessionQueue {
@@ -92,13 +97,17 @@
 NSString *const errorMethod = @"error";
 
 - (instancetype)initWithCameraName:(NSString *)cameraName
+                  aspectRatio: (NSString *)aspectRatio
                   resolutionPreset:(NSString *)resolutionPreset
+                  imageFormatGroup:(NSString *)imageFormatGroup
                        enableAudio:(BOOL)enableAudio
                        orientation:(UIDeviceOrientation)orientation
                captureSessionQueue:(dispatch_queue_t)captureSessionQueue
                              error:(NSError **)error {
   return [self initWithCameraName:cameraName
+                 aspectRatio:aspectRatio
                  resolutionPreset:resolutionPreset
+                 imageFormatGroup:imageFormatGroup
                       enableAudio:enableAudio
                       orientation:orientation
                    captureSession:[[AVCaptureSession alloc] init]
@@ -107,7 +116,9 @@ NSString *const errorMethod = @"error";
 }
 
 - (instancetype)initWithCameraName:(NSString *)cameraName
+                  aspectRatio: (NSString *)aspectRatio
                   resolutionPreset:(NSString *)resolutionPreset
+                  imageFormatGroup:(NSString *)imageFormatGroup
                        enableAudio:(BOOL)enableAudio
                        orientation:(UIDeviceOrientation)orientation
                     captureSession:(AVCaptureSession *)captureSession
@@ -115,11 +126,41 @@ NSString *const errorMethod = @"error";
                              error:(NSError **)error {
   self = [super init];
   NSAssert(self, @"super init cannot be nil");
-  @try {
-    _resolutionPreset = FLTGetFLTResolutionPresetForString(resolutionPreset);
-  } @catch (NSError *e) {
-    *error = e;
+
+  bool hasResolutionPreset = ![resolutionPreset isEqual: [NSNull null]];
+  bool hasAspectRatio = ![aspectRatio isEqual: [NSNull null]];
+
+  if(hasResolutionPreset && hasAspectRatio){
+        NSError *argumentError =
+                      [NSError errorWithDomain:NSCocoaErrorDomain
+                                          code:NSURLErrorUnknown
+                                      userInfo:@{
+                                        NSLocalizedDescriptionKey :
+                                            @"Cannot use both resolution preset and aspect ratio on the same camera."
+                                      }];
+
+        *error = argumentError;
+        return nil;
   }
+
+  if(hasResolutionPreset){
+      @try {
+        _resolutionPreset = FLTGetFLTResolutionPresetForString(resolutionPreset);
+      } @catch (NSError *e) {
+        *error = e;
+        return nil;
+      }
+  }
+
+  if(hasAspectRatio){
+      @try{
+        _aspectRatio = FLTGetFLTAspectRatioForString(aspectRatio);
+      } @catch(NSError *e){
+        *error = e;
+        return nil;
+      }
+  }
+
   _enableAudio = enableAudio;
   _captureSessionQueue = captureSessionQueue;
   _pixelBufferSynchronizationQueue =
@@ -175,9 +216,21 @@ NSString *const errorMethod = @"error";
   _motionManager = [[CMMotionManager alloc] init];
   [_motionManager startAccelerometerUpdates];
 
-  [self setCaptureSessionPreset:_resolutionPreset];
-  [self updateOrientation];
 
+  @try {
+    if(hasResolutionPreset){
+      [self setCaptureSessionPresetWithResolutionPreset:_resolutionPreset];
+    }
+
+    if(hasAspectRatio){
+        [self setCaptureSessionPresetWithAspectRatio:_aspectRatio];
+    }
+  } @catch (NSError *e) {
+    *error = e;
+    return nil;
+  }
+
+  [self updateOrientation];
   return self;
 }
 
@@ -322,7 +375,166 @@ NSString *const errorMethod = @"error";
   return file;
 }
 
-- (void)setCaptureSessionPreset:(FLTResolutionPreset)resolutionPreset {
+- (bool) hasMatchingAspectRatio:(CMVideoDimensions)dimension targetAspectRatio:(NSNumber*)aspectRatio{
+    bool isMatch = true;
+    NSNumber *dimensionRatio = [NSNumber numberWithFloat: (float)dimension.width / (float)dimension.height];
+
+    if(aspectRatio == nil){
+        isMatch = false;
+    } else if([aspectRatio isEqualToNumber:dimensionRatio]){
+        isMatch = true;
+    }else{
+        isMatch = false;
+    }
+
+    return isMatch;
+}
+
+- (NSDictionary *) groupSizesByAspectRatio {
+    NSArray* availableFormats = _captureDevice.formats;
+
+    if([availableFormats count] == 0){
+        NSError *error =
+                          [NSError errorWithDomain:NSCocoaErrorDomain
+                                              code:NSURLErrorUnknown
+                                          userInfo:@{
+                                            NSLocalizedDescriptionKey :
+                                                @"There is no AVCaptureDeviceFormat available for this camera."
+                                          }];
+
+        @throw error;
+    }
+
+    NSMutableArray *aspectRatio4_3List = [NSMutableArray new];
+    NSMutableArray *aspectRatio16_9List = [NSMutableArray new];
+
+    NSMutableDictionary *aspectRatioSizeListMap = [NSMutableDictionary new];
+    [aspectRatioSizeListMap setObject:aspectRatio4_3List forKey:ASPECT_RATIO_4_3];
+    [aspectRatioSizeListMap setObject:aspectRatio16_9List forKey:ASPECT_RATIO_16_9];
+
+    for(AVCaptureDeviceFormat *format in availableFormats){
+        CMVideoFormatDescriptionRef videoFormat = (CMVideoFormatDescriptionRef) format.formatDescription;
+        CMVideoDimensions videoDimensions = CMVideoFormatDescriptionGetDimensions(videoFormat);
+        bool hasMatchedKey = false;
+
+        for (NSNumber *key in [aspectRatioSizeListMap allKeys]) {
+            bool hasMatchingAspectRatio = [self hasMatchingAspectRatio:videoDimensions targetAspectRatio:key];
+            if(hasMatchingAspectRatio){
+                hasMatchedKey = true;
+                NSValue *dimensionSizeValue = [NSValue valueWithCGSize: CGSizeMake(videoDimensions.width, videoDimensions.height)];
+                NSMutableArray *array = [aspectRatioSizeListMap objectForKey:key];
+
+                if(![array containsObject:dimensionSizeValue]){
+                    [array insertObject:dimensionSizeValue atIndex:0];
+                }
+            }
+        }
+
+        if(!hasMatchedKey){
+            NSNumber *newKey = [NSNumber numberWithFloat: (float)videoDimensions.width / (float)videoDimensions.height];
+            NSMutableArray *newArray = [NSMutableArray new];
+            NSValue *newDimensionSizeValue = [NSValue valueWithCGSize: CGSizeMake(videoDimensions.width, videoDimensions.height)];
+
+            [newArray addObject:newDimensionSizeValue];
+            [aspectRatioSizeListMap setObject:newArray forKey:newKey];
+        }
+    }
+
+    return aspectRatioSizeListMap;
+}
+
+
+- (NSNumber *) getTargetAspectRatio :(FLTAspectRatio) aspectRatio{
+    NSNumber *targetAspectRatio = nil;
+    switch(aspectRatio){
+        case FLTAspectRatio4_3:
+            targetAspectRatio = ASPECT_RATIO_4_3;
+            break;
+        case FLTAspectRatio16_9:
+            targetAspectRatio = ASPECT_RATIO_16_9;
+            break;
+    }
+    return targetAspectRatio;
+}
+
+- (NSArray *)getSupportedOutputSizes:(FLTAspectRatio) targetAspectRatio{
+
+    NSDictionary *aspectRatioSizeListMap = [self groupSizesByAspectRatio];
+    NSNumber *aspectRatio = [self getTargetAspectRatio:targetAspectRatio];
+    NSArray *availableRatios = [aspectRatioSizeListMap allKeys];
+    NSArray *sortedAvailableRatios = [availableRatios sortedArrayUsingComparator:^NSComparisonResult(NSNumber* lhs, NSNumber* rhs){
+        float lhsValue = [lhs floatValue];
+        float rhsValue = [rhs floatValue];
+
+        if(lhsValue == rhsValue){
+            return 0;
+        }
+
+        float lhsRatioDelta = fabsf(lhsValue - [aspectRatio floatValue]);
+        float rhsRatioDelta = fabsf(rhsValue - [aspectRatio floatValue]);
+
+        float result = lhsRatioDelta - rhsRatioDelta;
+        if(result < 0){
+            return -1;
+        } else{
+            return 1;
+        }
+    }];
+
+    NSMutableArray *supportedResolution = [NSMutableArray new];
+    for (NSNumber *key in sortedAvailableRatios){
+        for(NSNumber *val in [aspectRatioSizeListMap objectForKey:key]){
+            if(![supportedResolution containsObject:val]){
+                [supportedResolution addObject:val];
+            }
+        };
+    }
+
+    return supportedResolution;
+}
+
+- (void) getSetCaptureDeviceFormat:(CGSize) size{
+    _captureSession.sessionPreset = AVCaptureSessionPresetInputPriority;
+
+    for(AVCaptureDeviceFormat *format in _captureDevice.formats){
+        CMVideoDimensions dim = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
+
+        if(dim.width == size.width && dim.height == size.height){
+            if ([_captureDevice lockForConfiguration:NULL] == YES) {
+                _captureDevice.activeFormat = format;
+                [_captureDevice unlockForConfiguration];
+            }
+            break;
+        }
+    }
+}
+
+- (void)setCaptureSessionPresetWithAspectRatio:(FLTAspectRatio) aspectRatio{
+    NSArray *supportedOutputSizes = [self getSupportedOutputSizes:aspectRatio];
+
+    if(supportedOutputSizes == nil || [supportedOutputSizes count] == 0){
+        if ([_captureSession canSetSessionPreset:AVCaptureSessionPresetLow]) {
+            _captureSession.sessionPreset = AVCaptureSessionPresetLow;
+            _previewSize = CGSizeMake(352, 288);
+        } else {
+            NSError *error =
+                [NSError errorWithDomain:NSCocoaErrorDomain
+                                    code:NSURLErrorUnknown
+                                userInfo:@{
+                                  NSLocalizedDescriptionKey :
+                                      @"No capture session available for current capture session."
+                                }];
+            @throw error;
+        }
+    }else{
+        NSValue *biggestSize =  [supportedOutputSizes objectAtIndex:0];
+        CGSize biggestSizeSupported = [biggestSize CGSizeValue];
+        [self getSetCaptureDeviceFormat:biggestSizeSupported];
+        _previewSize = biggestSizeSupported;
+    }
+}
+
+- (void)setCaptureSessionPresetWithResolutionPreset:(FLTResolutionPreset)resolutionPreset {
   switch (resolutionPreset) {
     case FLTResolutionPresetMax:
     case FLTResolutionPresetUltraHigh:

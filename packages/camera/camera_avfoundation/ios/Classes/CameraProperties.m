@@ -145,6 +145,24 @@ NSString *FLTGetStringForUIDeviceOrientation(UIDeviceOrientation orientation) {
   };
 }
 
+#pragma mark - aspect ratio
+
+FLTAspectRatio FLTGetFLTAspectRatioForString(NSString *aspectRatio) {
+  if ([aspectRatio isEqualToString:@"RATIO_4_3"]) {
+    return FLTAspectRatio4_3;
+  } else if ([aspectRatio isEqualToString:@"RATIO_16_9"]) {
+    return FLTAspectRatio16_9;
+  } else {
+    NSError *error = [NSError errorWithDomain:NSCocoaErrorDomain
+                                         code:NSURLErrorUnknown
+                                     userInfo:@{
+                                       NSLocalizedDescriptionKey : [NSString
+                                           stringWithFormat:@"Unknown aspect ratio %@", aspectRatio]
+                                     }];
+    @throw error;
+  }
+}
+
 #pragma mark - resolution preset
 
 FLTResolutionPreset FLTGetFLTResolutionPresetForString(NSString *preset) {

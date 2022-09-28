@@ -87,6 +87,24 @@ extern UIDeviceOrientation FLTGetUIDeviceOrientationForString(NSString *orientat
  */
 extern NSString *FLTGetStringForUIDeviceOrientation(UIDeviceOrientation orientation);
 
+
+#pragma mark - aspect ratio
+
+/**
+ * Represents camera's aspect ratio present. Mirrors CameraAspectRatio in camera.dart.
+ */
+typedef NS_ENUM(NSInteger, FLTAspectRatio) {
+  FLTAspectRatio4_3 = 0,
+  FLTAspectRatio16_9 = 1,
+};
+
+/**
+ * Gets FLTAspectRatio from its string representation.
+ * @param aspectRatio a string representation of FLTAspectRatio.
+ */
+extern FLTAspectRatio FLTGetFLTAspectRatioForString(NSString *aspectRatio);
+
+
 #pragma mark - resolution preset
 
 /**
@@ -102,11 +120,15 @@ typedef NS_ENUM(NSInteger, FLTResolutionPreset) {
   FLTResolutionPresetMax,
 };
 
+
 /**
  * Gets FLTResolutionPreset from its string representation.
  * @param preset a string representation of FLTResolutionPreset.
  */
 extern FLTResolutionPreset FLTGetFLTResolutionPresetForString(NSString *preset);
+
+
+
 
 #pragma mark - video format
 

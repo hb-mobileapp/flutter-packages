@@ -6,6 +6,8 @@
 @import Foundation;
 @import Flutter;
 
+
+#import "math.h"
 #import "CameraProperties.h"
 #import "FLTThreadSafeEventChannel.h"
 #import "FLTThreadSafeFlutterResult.h"
@@ -25,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy) void (^onFrameAvailable)(void);
 @property(nonatomic) FLTThreadSafeMethodChannel *methodChannel;
 @property(assign, nonatomic) FLTResolutionPreset resolutionPreset;
+@property(assign, nonatomic) FLTAspectRatio aspectRatio;
 @property(assign, nonatomic) FLTExposureMode exposureMode;
 @property(assign, nonatomic) FLTFocusMode focusMode;
 @property(assign, nonatomic) FLTFlashMode flashMode;
@@ -33,13 +36,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Initializes an `FLTCam` instance.
 /// @param cameraName a name used to uniquely identify the camera.
+/// @param aspectRatio target aspect ratio
 /// @param resolutionPreset the resolution preset
+/// @param imageFormatGroup target image format gruop
 /// @param enableAudio YES if audio should be enabled for video capturing; NO otherwise.
 /// @param orientation the orientation of camera
 /// @param captureSessionQueue the queue on which camera's capture session operations happen.
 /// @param error report to the caller if any error happened creating the camera.
 - (instancetype)initWithCameraName:(NSString *)cameraName
+                  aspectRatio:(NSString *)aspectRatio
                   resolutionPreset:(NSString *)resolutionPreset
+                  imageFormatGroup:(NSString *)imageFormatGroup
                        enableAudio:(BOOL)enableAudio
                        orientation:(UIDeviceOrientation)orientation
                captureSessionQueue:(dispatch_queue_t)captureSessionQueue
