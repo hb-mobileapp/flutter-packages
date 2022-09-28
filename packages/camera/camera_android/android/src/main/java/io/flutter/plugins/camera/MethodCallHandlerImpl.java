@@ -444,7 +444,6 @@ final class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
     private void instantiateCamera(MethodCall call, Result result) throws CameraAccessException {
         String cameraName = call.argument("cameraName");
         String ratio = call.argument("aspectRatio");
-        String format = call.argument("imageFormatGroup");
         String preset = call.argument("resolutionPreset");
         String imageFormat = call.argument("imageFormatGroup");
         boolean enableAudio = call.argument("enableAudio");

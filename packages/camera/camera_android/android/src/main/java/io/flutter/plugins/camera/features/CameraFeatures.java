@@ -65,7 +65,7 @@ public class CameraFeatures {
 
         if(resolutionPreset != null && aspectRatio != null){
             throw new IllegalArgumentException(
-                    "Cannot use both resolution and aspect ratio on the same camera");
+                    "Cannot use both resolution preset and aspect ratio on the same camera");
         }
 
         CameraFeatures cameraFeatures = new CameraFeatures();

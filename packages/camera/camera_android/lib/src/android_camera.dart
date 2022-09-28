@@ -595,6 +595,7 @@ class AndroidCamera extends CameraPlatform {
     }
   }
 
+  /// Returns the camera aspect ratio group as a String.
   String _serializeAspectRatio(CameraAspectRatio cameraAspectRatio) {
     switch (cameraAspectRatio) {
       case CameraAspectRatio.RATIO_4_3:
@@ -607,6 +608,7 @@ class AndroidCamera extends CameraPlatform {
     }
   }
 
+  /// Returns the image format group as a String.
   String _serializeImageFormatGroup(ImageFormatGroup imageFormatGroup) {
     switch (imageFormatGroup) {
       case ImageFormatGroup.yuv420:
