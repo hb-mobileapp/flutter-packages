@@ -425,21 +425,6 @@ final class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
         methodChannel.setMethodCallHandler(null);
     }
 
-    // TODO(nm-jiwonhae) : fix error messsage
-    private int getImageFormat(String format){
-        if(format.equals("yuv420")){
-            return ImageFormat.YUV_420_888;
-        }
-
-        if(format.equals("jpeg")){
-            return ImageFormat.JPEG;
-        }
-
-        throw new IllegalArgumentException(
-                "No image format available for the device");
-
-    }
-
     // TODO (nm-jiwonhae) : TODO implement aspect ratio
     private void instantiateCamera(MethodCall call, Result result) throws CameraAccessException {
         String cameraName = call.argument("cameraName");

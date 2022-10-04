@@ -60,6 +60,8 @@ android {
 
 dependencies {
     compileOnly 'androidx.annotation:annotation:1.1.0'
+    implementation("com.google.guava:guava:31.1-jre")
+
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-inline:4.7.0'
     testImplementation 'androidx.test:core:1.4.0'

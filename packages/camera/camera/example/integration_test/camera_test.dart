@@ -250,7 +250,7 @@ void main() {
       cameras.first,
       resolutionPreset : ResolutionPreset.low,
       enableAudio: false,
-      imageFormatGroup: imageFormatGroup,
+      imageFormatGroup: imageFormatGroup ?? ImageFormatGroup.yuv420,
     );
 
     await controller.initialize();

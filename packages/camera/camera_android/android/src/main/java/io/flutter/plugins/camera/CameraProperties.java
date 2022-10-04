@@ -15,6 +15,10 @@ import android.util.Rational;
 import android.util.Size;
 import androidx.annotation.RequiresApi;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * An interface allowing access to the different characteristics of the device's camera.
  */
@@ -277,6 +281,8 @@ public interface CameraProperties {
     StreamConfigurationMap getConfigurationMap();
 
     boolean isSensorLandscapeResolution();
+
+    List<String> getSupportedSurfaceCombination();
 }
 
 /**
@@ -411,6 +417,9 @@ class CameraPropertiesImpl implements CameraProperties {
         return cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
     }
 
+
+
+
     @Override
     public boolean isSensorLandscapeResolution() {
         Size pixelArraySize = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
@@ -419,4 +428,13 @@ class CameraPropertiesImpl implements CameraProperties {
         return pixelArraySize != null ? pixelArraySize.getWidth() >= pixelArraySize.getHeight()
                 : true;
     }
+
+    @Override
+    public List<String> getSupportedSurfaceCombination() {
+
+        cameraCharacteristics.get
+
+        return Collections.emptyList();
+    }
+
 }

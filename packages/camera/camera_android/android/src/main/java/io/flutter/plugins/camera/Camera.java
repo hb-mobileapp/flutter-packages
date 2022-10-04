@@ -37,6 +37,13 @@ import android.view.Surface;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import io.flutter.embedding.engine.systemchannels.PlatformChannel;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodChannel;
@@ -77,7 +84,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @FunctionalInterface
 interface ErrorCallback {
@@ -149,6 +163,7 @@ class Camera
     private CameraCaptureSession captureSession;
     private ImageReader pictureImageReader;
     private ImageReader imageStreamReader;
+    private ImageReader analysisImageReader;
     /**
      * {@link CaptureRequest.Builder} for the camera preview
      */
@@ -341,9 +356,6 @@ class Camera
         final int previewWidth = resolutionFeature != null ? resolutionFeature.getPreviewSize().getWidth() : aspectRatioFeature.getPreviewSize().getWidth();
         final int previewHeight = resolutionFeature != null ? resolutionFeature.getPreviewSize().getHeight() : aspectRatioFeature.getPreviewSize().getHeight();
 
-
-        Log.d(TAG, "preview size : " + previewWidth + "x" + previewHeight);
-
         imageStreamReader =
                 ImageReader.newInstance(
                         previewWidth,
@@ -446,8 +458,6 @@ class Camera
 
         final int previewWidth = resolutionFeature != null ? resolutionFeature.getPreviewSize().getWidth() : aspectRatioFeature.getPreviewSize().getWidth();
         final int previewHeight = resolutionFeature != null ? resolutionFeature.getPreviewSize().getHeight() : aspectRatioFeature.getPreviewSize().getHeight();
-
-        Log.d(TAG, "capture size : " + previewWidth + "x" + previewHeight);
 
         SurfaceTexture surfaceTexture = flutterTexture.surfaceTexture();
         surfaceTexture.setDefaultBufferSize(
@@ -1232,7 +1242,12 @@ class Camera
 
     public void startPreviewWithImageStream(EventChannel imageStreamChannel)
             throws CameraAccessException {
-        createCaptureSession(CameraDevice.TEMPLATE_RECORD, imageStreamReader.getSurface());
+
+        ResolutionFeature testFeature = new ResolutionFeature(cameraProperties, ResolutionPreset.high, cameraProperties.getCameraName());
+        analysisImageReader = ImageReader.newInstance(testFeature.getPreviewSize().getWidth(), testFeature.getPreviewSize().getHeight(), ImageFormat.YUV_420_888, 1);
+        createCaptureSession(CameraDevice.TEMPLATE_RECORD, analysisImageReader.getSurface());
+
+        //createCaptureSession(CameraDevice.TEMPLATE_RECORD, imageStreamReader.getSurface());
         Log.i(TAG, "startPreviewWithImageStream");
 
         imageStreamChannel.setStreamHandler(
@@ -1245,6 +1260,7 @@ class Camera
                     @Override
                     public void onCancel(Object o) {
                         imageStreamReader.setOnImageAvailableListener(null, backgroundHandler);
+                        //imageStreamReader.setOnImageAvailableListener(null, backgroundHandler);
                     }
                 });
     }
@@ -1277,7 +1293,7 @@ class Camera
     }
 
     private void setImageStreamImageAvailableListener(final EventChannel.EventSink imageStreamSink) {
-        imageStreamReader.setOnImageAvailableListener(
+        analysisImageReader.setOnImageAvailableListener(
                 reader -> {
                     Image img = reader.acquireNextImage();
                     // Use acquireNextImage since image reader is only for one image.

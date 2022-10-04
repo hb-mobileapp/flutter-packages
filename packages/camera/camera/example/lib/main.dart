@@ -9,6 +9,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 import 'package:video_player/video_player.dart';
 
 /// Camera example home widget.
@@ -702,10 +703,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     }
 
     final CameraController cameraController = CameraController(cameraDescription,
-        //aspectRatio: CameraAspectRatio.RATIO_4_3,
-        resolutionPreset: ResolutionPreset.max,
-        enableAudio: enableAudio,
-        imageFormatGroup: ImageFormatGroup.jpeg);
+        aspectRatio: CameraAspectRatio.RATIO_16_9,
+        enableAudio: enableAudio);
 
     controller = cameraController;
 
@@ -763,14 +762,16 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
             .then((double aperture) => _currentLensAperture = aperture),
       ]);
 
-      cameraController.startImageStream((CameraImage image) {
-        print('image received is : ${image.width} x ${image.height}');
-        if (_currentExposureMode == ExposureMode.auto) {
-          _currentSensorSensitivity = image.sensorSensitivity?.toInt() ?? _minSensorSensitivity;
-          _currentExposureTime = image.sensorExposureTime ?? _minExposureTime;
-          setState(() {});
-        }
-      });
+      // cameraController.startImageStream((CameraImage image) {
+      //   print('image received is : ${image.width} x ${image.height}');
+      //   if (_currentExposureMode == ExposureMode.auto) {
+      //     _currentSensorSensitivity = image.sensorSensitivity?.toInt() ?? _minSensorSensitivity;
+      //     _currentExposureTime = image.sensorExposureTime ?? _minExposureTime;
+      //     setState(() {});
+      //   }
+      // });
+
+
     } on CameraException catch (e) {
       switch (e.code) {
         case 'CameraAccessDenied':
@@ -808,6 +809,12 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
 
   void onTakePictureButtonPressed() {
     takePicture().then((XFile? file) {
+      if(file == null){
+        return;
+      }
+
+      GallerySaver.saveImage(file.path, albumName: 'CameraCustom');
+
       if (mounted) {
         setState(() {
           imageFile = file;

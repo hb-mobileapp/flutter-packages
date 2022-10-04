@@ -47,7 +47,9 @@
 /// Initializes a camera instance.
 /// Allows for injecting dependencies that are usually internal.
 - (instancetype)initWithCameraName:(NSString *)cameraName
+                  aspectRatio:(NSString *)aspectRatio
                   resolutionPreset:(NSString *)resolutionPreset
+                  imageFormatGroup:(NSString *)imageFormatGroup
                        enableAudio:(BOOL)enableAudio
                        orientation:(UIDeviceOrientation)orientation
                     captureSession:(AVCaptureSession *)captureSession

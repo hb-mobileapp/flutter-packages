@@ -54,9 +54,6 @@ class FakeController extends ValueNotifier<CameraValue>
   Future<double> getMinZoomLevel() async => 1.0;
 
   @override
-  ImageFormatGroup? get imageFormatGroup => null;
-
-  @override
   Future<void> initialize() async {}
 
   @override
@@ -148,6 +145,9 @@ class FakeController extends ValueNotifier<CameraValue>
 
   @override
   CameraAspectRatio? get aspectRatio => CameraAspectRatio.RATIO_4_3;
+
+  @override
+  ImageFormatGroup get imageFormatGroup => ImageFormatGroup.yuv420;
 }
 
 void main() {
